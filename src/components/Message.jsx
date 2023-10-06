@@ -12,8 +12,17 @@ import {
   where,
   getDoc,
   doc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import {
+  format,
+  formatDistance,
+  formatRelative,
+  parseISO,
+  subDays,
+} from "date-fns";
+import { enIN } from "date-fns/locale";
 
 const Message = ({ message }) => {
   const { currentUser } = useContext(AuthContext);
@@ -41,22 +50,36 @@ const Message = ({ message }) => {
       console.log("Editing message with id:", id, "and senderId:", senderId);
       try {
         // Create a Firestore document reference for the message
-        const messageDocRef = doc(db, "chats", senderId, "messages", id);
+        const docRef = doc(db, "chats", data.chatId);
+        const document = await getDoc(docRef);
 
-        // Check if the document exists
-        const docSnapshot = await getDoc(messageDocRef);
+        if (document.exists()) {
+          const chat = document.data();
+          const message = chat.messages.find((message) => message.id === id);
 
-        if (docSnapshot.exists()) {
-          // Document exists, proceed with the update
-          await updateDoc(messageDocRef, {
-            text: newText,
-          });
+          // update the message
+          message.text = newText;
+          message.date = Timestamp.now();
 
+          await updateDoc(document.ref, chat);
           console.log("Message Updated Successfully");
         } else {
-          // Document doesn't exist, handle the error
           console.error("The document does not exist.");
         }
+        // Check if the document exists
+        // const docSnapshot = await getDoc(messageDocRef);
+        // console.log(docSnapshot);
+
+        // if (docSnapshot.exists()) {
+        //   // Document exists, proceed with the update
+        //   await updateDoc(messageDocRef, {
+        //     text: newText,
+        //   });
+
+        // } else {
+        //   // Document doesn't exist, handle the error
+        //   console.error("The document does not exist.");
+        // }
       } catch (error) {
         console.error("Error Updating message:", error);
       }
@@ -75,7 +98,14 @@ const Message = ({ message }) => {
           src={isSender ? currentUser.photoURL : data.user.photoURL}
           alt=""
         />
-        <span>just now</span>
+        {/* <span>{format(parseISO(message.date), )}</span> */}
+        <span>
+          {formatDistance(new Date(), new Date(message.date.seconds * 1000), {
+            locale: enIN,
+            addSuffix: true,
+            includeSeconds: true,
+          })}
+        </span>
       </div>
       <div className="messageContent">
         {isSender && (

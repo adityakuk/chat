@@ -41,16 +41,26 @@ const Search = () => {
 
   const handleSelect = async () => {
     //check whether the group(chats in firestore) exists, if not create
+    console.log(122222222222);
+
     const combinedId =
       currentUser.uid > user.uid
         ? currentUser.uid + user.uid
         : user.uid + currentUser.uid;
     try {
       const res = await getDoc(doc(db, "chats", combinedId));
+      const messageCollectionRef = collection(
+        db,
+        "chats",
+        combinedId,
+        "messages"
+      );
 
+      console.log(messageCollectionRef);
+      console.log("calling handle select", combinedId);
       if (!res.exists()) {
         //create a chat in chats collection
-        await setDoc(doc(db, "chats", combinedId), { messages: [] });
+        await setDoc(doc(db, "chats", combinedId));
 
         //create user chats
         await updateDoc(doc(db, "userChats", currentUser.uid), {
@@ -74,7 +84,7 @@ const Search = () => {
     } catch (err) {}
 
     setUser(null);
-    setUsername("")
+    setUsername("");
   };
   return (
     <div className="search">
