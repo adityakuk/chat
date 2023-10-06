@@ -5,7 +5,14 @@ import IconButton from "@mui/material/IconButton";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import { deleteDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 
 const Message = ({ message }) => {
@@ -27,46 +34,38 @@ const Message = ({ message }) => {
     setMenuOpen(true);
   };
 
-  const handleEditClick = async () => {
+  const handleEditClick = async (id, senderId) => {
     const newText = prompt("Edit the message:", message.text);
 
     if (newText !== null && newText !== message.text) {
+      console.log("Editing message with id:", id, "and senderId:", senderId);
       try {
         // Create a Firestore document reference for the message
-        const messageDocRef = doc(
-          db,
-          "chats",
-          data.chatId,
-          "messages",
-          message.id
-        );
+        const messageDocRef = doc(db, "chats", senderId, "messages", id);
+
+        // Check if the document exists
         const docSnapshot = await getDoc(messageDocRef);
+
         if (docSnapshot.exists()) {
+          // Document exists, proceed with the update
           await updateDoc(messageDocRef, {
             text: newText,
           });
+
           console.log("Message Updated Successfully");
         } else {
-          console.error("Document does not exist:", message.id);
+          // Document doesn't exist, handle the error
+          console.error("The document does not exist.");
         }
       } catch (error) {
-        console.log("Error Updating messages:", error);
+        console.error("Error Updating message:", error);
       }
     }
   };
 
-  const handleMenuClose = async () => {
+  const handleMenuClose = () => {
     setMenuAnchor(null);
     setMenuOpen(false);
-
-    if (isSender) {
-      try {
-        await deleteDoc(doc(db, "chats", data.chatId, "messages", message.id));
-        console.log(message.id);
-      } catch (error) {
-        console.error("Error deleting message:", error);
-      }
-    }
   };
 
   return (
@@ -95,12 +94,15 @@ const Message = ({ message }) => {
               onClose={handleMenuClose}
             >
               <MenuItem onClick={handleMenuClose}>Delete</MenuItem>
-              <MenuItem onClick={handleEditClick}>Edit</MenuItem>
+              <MenuItem
+                onClick={() => handleEditClick(message.id, message.senderId)}
+              >
+                Edit
+              </MenuItem>
             </Menu>
           </>
         )}
         <p>{message.text}</p>
-
         {message.img && <img src={message.img} alt="" />}
       </div>
     </div>
@@ -108,3 +110,35 @@ const Message = ({ message }) => {
 };
 
 export default Message;
+
+// const handleEditClick = async () => {
+//   const newText = prompt("Edit the message:", message.text);
+
+//   if (newText !== null && newText !== message.text) {
+//     try {
+//       // Create a Firestore document reference for the message
+//       const messagesRef = collection(db, "chats", data.chatId, "messages");
+
+//       const q = query(messagesRef, where("senderId", "==", message.senderId));
+
+//       const querySnapshot = await getDocs(q);
+
+//       querySnapshot.forEach(async (doc) => {
+//         const messageDocRef = doc(
+//           db,
+//           "chats",
+//           data.chatId,
+//           "messages",
+//           doc.id
+//         );
+
+//         await updateDoc(messageDocRef, {
+//           text: newText,
+//         });
+//         console.log("Message Updated Successfully");
+//       });
+//     } catch (error) {
+//       console.error("Error Updating messages:", error);
+//     }
+//   }
+// };
