@@ -10,7 +10,17 @@ const Messages = () => {
 
   useEffect(() => {
     const unSub = onSnapshot(doc(db, "chats", data.chatId), (doc) => {
-      doc.exists() && setMessages(doc.data().messages);
+      if (doc.exists()) {
+        const chatData = doc.data();
+        if (Array.isArray(chatData.messages)) {
+          setMessages(chatData.messages);
+        } else {
+          setMessages([]);
+        }
+      } else {
+        setMessages([]);
+      }
+      // doc.exists() && setMessages(doc.data().messages);
     });
 
     return () => {
@@ -22,9 +32,11 @@ const Messages = () => {
 
   return (
     <div className="messages">
-      {messages.map((m) => (
+      {Array.isArray(messages) &&
+        messages.map((m) => <Message message={m} key={m.id} />)}
+      {/* {messages.map((m) => (
         <Message message={m} key={m.id} />
-      ))}
+      ))} */}
       {/* {message.img && <img src={message.img} alt="" />} */}
     </div>
   );

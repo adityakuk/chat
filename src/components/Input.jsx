@@ -63,7 +63,6 @@ const Input = () => {
         }),
       });
     }
-
     await updateDoc(doc(db, "userChats", currentUser.uid), {
       [data.chatId + ".lastMessage"]: {
         text,
@@ -90,9 +89,9 @@ const Input = () => {
         value={text}
       />
       <div className="send">
-        <img src={Attach} alt="" />
+        {/* <img src={Attach} alt="" /> */}
         <input
-          type="file"
+          type="file" 
           style={{ display: "none" }}
           id="file"
           onChange={(e) => setImg(e.target.files[0])}
