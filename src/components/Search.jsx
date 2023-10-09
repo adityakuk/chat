@@ -40,48 +40,49 @@ const Search = () => {
   };
 
   const handleSelect = async () => {
-    //check whether the group(chats in firestore) exists, if not create
-    console.log(122222222222);
+    setErr(false); // Reset error state
 
     const combinedId =
       currentUser.uid > user.uid
         ? currentUser.uid + user.uid
         : user.uid + currentUser.uid;
+
     try {
+      console.log("Calling handleSelect with combinedId:", combinedId);
+
       const res = await getDoc(doc(db, "chats", combinedId));
-      const messageCollectionRef = collection(
-        db,
-        "chats",
-        combinedId,
-        "messages"
-      );
-
-      console.log(messageCollectionRef);
-      console.log("calling handle select", combinedId);
       if (!res.exists()) {
-        //create a chat in chats collection
-        await setDoc(doc(db, "chats", combinedId));
+        console.log("Chat does not exist, creating it...");
 
-        //create user chats
+        // Create a chat in the "chats" collection
+        await setDoc(doc(db, "chats", combinedId), {});
+
+        // Create/update user chats
         await updateDoc(doc(db, "userChats", currentUser.uid), {
-          [combinedId + ".userInfo"]: {
-            uid: user.uid,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+          [combinedId]: {
+            userInfo: {
+              uid: user.uid,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+            },
+            date: serverTimestamp(),
           },
-          [combinedId + ".date"]: serverTimestamp(),
         });
 
         await updateDoc(doc(db, "userChats", user.uid), {
-          [combinedId + ".userInfo"]: {
-            uid: currentUser.uid,
-            displayName: currentUser.displayName,
-            photoURL: currentUser.photoURL,
+          [combinedId]: {
+            userInfo: {
+              uid: currentUser.uid,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+            },
+            date: serverTimestamp(),
           },
-          [combinedId + ".date"]: serverTimestamp(),
         });
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error in handleSelect:", err);
+    }
 
     setUser(null);
     setUsername("");

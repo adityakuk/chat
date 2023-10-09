@@ -252,6 +252,7 @@
               object-fit: cover;
             }
           }
+          
           .messageContent {
             max-width: 80%;
             display: flex;
@@ -260,7 +261,10 @@
 
             p {
               background-color: white;
-              padding: 10px 20px;
+              padding: 5px 15px;
+              margin-left: 25px;
+              padding-left: 10px;
+              padding-right: 3px;
               border-radius: 0px 10px 10px 10px;
               max-width: max-content;
             }
@@ -276,7 +280,7 @@
             .messageContent {
               align-items: flex-end;
               p {
-                background-color: #8da4f1;
+                background-color: #00a884;;
                 color: white;
                 border-radius: 10px 0px 10px 10px;
               }

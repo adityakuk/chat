@@ -24,6 +24,11 @@ import {
   subDays,
 } from "date-fns";
 import { enIN } from "date-fns/locale";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import CloseIcon from "@mui/icons-material/Close";
+import Typography from "@mui/material/Typography";
 
 const Message = ({ message }) => {
   const { currentUser } = useContext(AuthContext);
@@ -32,6 +37,10 @@ const Message = ({ message }) => {
   const ref = useRef();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
+
+  // open full screen image
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedImage, setSeletedImage] = useState("");
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,12 +101,23 @@ const Message = ({ message }) => {
     setMenuOpen(false);
   };
 
+  // full screen image
+  const handleImageClick = (imageURL) => {
+    setSeletedImage(imageURL);
+    setOpenDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+  };
+
   return (
     <div ref={ref} className={`message ${isSender ? "owner" : ""}`}>
       <div className="messageInfo flex justify-between items-center">
         <img
           src={isSender ? currentUser.photoURL : data.user.photoURL}
           alt=""
+          style={{ width: "30px", height: "30px", borderRadius: "50%" }}
         />
         {/* <span>{format(parseISO(message.date), )}</span> */}
         <div>
@@ -118,16 +138,16 @@ const Message = ({ message }) => {
                 onClose={handleDeleteClick}
               >
                 <MenuItem
+                  onClick={() => handleEditClick(message.id, message.senderId)}
+                >
+                  Edit
+                </MenuItem>
+                <MenuItem
                   onClick={() =>
                     handleDeleteClick(message.id, message.senderId)
                   }
                 >
                   Delete
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleEditClick(message.id, message.senderId)}
-                >
-                  Edit
                 </MenuItem>
               </Menu>
             </>
@@ -135,24 +155,70 @@ const Message = ({ message }) => {
         </div>
       </div>
       <div className="messageContent">
-        <p>{message.text}</p>
-        {message.img && <img src={message.img} alt="" />}
-        <span className="bg-black sm:text-sm text-xs">
-          {formatDistance(
-            new Date(),
-            new Date(message.date.seconds * 1000),
-            "hh:mm a",
-            {
-              locale: enIN,
-              addSuffix: true,
-              includeSeconds: true,
-            }
-          )}
-          {/*           
-          {format(new Date(message.date.seconds * 1000), "hh:mm a", {
-            locale: enIN,
-          })} */}
-        </span>
+        <p>
+          {message.text}{" "}
+          <div className="dateTime">
+            <Typography
+              className="text-sm"
+              variant="body2"
+              color="textSecondary"
+              sx={{
+                margin: "0px",
+                marginLeft: "2px",
+                paddingRight: "20px",
+              }}
+            >
+              {formatDistance(
+                new Date(),
+                new Date(message.date.seconds * 1000),
+                "hh:mm a",
+                {
+                  locale: enIN,
+                  addSuffix: true,
+                  includeSeconds: true,
+                }
+              )}
+            </Typography>
+          </div>
+        </p>
+        {message.img && (
+          <img
+            src={message.img}
+            alt=""
+            onClick={() => handleImageClick(message.img)}
+            className="clickable-image"
+          />
+        )}
+        <Dialog
+          open={openDialog}
+          onClose={handleDialogClose}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            Fullscreen Image
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleDialogClose}
+              aria-label="close"
+              style={{
+                position: "absolute",
+                right: 8,
+                top: 8,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <img
+              src={selectedImage}
+              alt="Fullscreen"
+              style={{ width: "100%" }}
+            />
+          </DialogContent>
+        </Dialog>{" "}
       </div>
     </div>
   );

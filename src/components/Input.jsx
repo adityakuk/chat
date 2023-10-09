@@ -91,7 +91,7 @@ const Input = () => {
       <div className="send">
         {/* <img src={Attach} alt="" /> */}
         <input
-          type="file" 
+          type="file"
           style={{ display: "none" }}
           id="file"
           onChange={(e) => setImg(e.target.files[0])}
