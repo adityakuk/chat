@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const [err, setErr] = useState(false);
@@ -14,8 +15,18 @@ const Login = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      Swal.fire({
+        icon: "success",
+        title: "success",
+        text: "You are successfully logged in",
+      });
       navigate("/");
     } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Wrong Email and Password",
+        text: "Please enter your valid Email and Password",
+      });
       setErr(true);
     }
   };
@@ -28,7 +39,7 @@ const Login = () => {
           <input type="email" placeholder="email" />
           <input type="password" placeholder="password" />
           <button>Sign in</button>
-          {err && <span>Something went wrong</span>}
+          {/* {err && <span>Something went wrong</span>} */}
         </form>
         <p>
           You don't have an account? <Link to="/register">Register</Link>

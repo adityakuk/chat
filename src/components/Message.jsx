@@ -5,24 +5,9 @@ import IconButton from "@mui/material/IconButton";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import {
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDoc,
-  doc,
-  Timestamp,
-  deleteDoc,
-} from "firebase/firestore";
+import { updateDoc, getDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import {
-  format,
-  formatDistance,
-  formatRelative,
-  parseISO,
-  subDays,
-} from "date-fns";
+import { format, formatDistance } from "date-fns";
 import { enIN } from "date-fns/locale";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -41,6 +26,8 @@ const Message = ({ message }) => {
   // open full screen image
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedImage, setSeletedImage] = useState("");
+
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,9 +77,16 @@ const Message = ({ message }) => {
       if (document.exists()) {
         const chat = document.data();
 
-        chat.messages = chat.messages.filter((message) => message.id !== id);
+        const messageIndex = chat.messages.findIndex(
+          (message) => message.id === id
+        );
+        if (messageIndex !== -1) {
+          chat.messages[messageIndex].text = "Message Deleted";
+          chat.messages[messageIndex].isDeleted = true;
 
-        await updateDoc(document.ref, chat);
+          await updateDoc(document.ref, chat);
+          setIsDeleted(true);
+        }
       }
     } catch (error) {
       console.log("Deleted message error", error);
@@ -112,83 +106,90 @@ const Message = ({ message }) => {
   };
 
   return (
-    <div ref={ref} className={`message ${isSender ? "owner" : ""}`}>
-      <div className="messageInfo flex justify-between items-center">
-        <img
-          src={isSender ? currentUser.photoURL : data.user.photoURL}
-          alt=""
-          style={{ width: "30px", height: "30px", borderRadius: "50%" }}
-        />
-        {/* <span>{format(parseISO(message.date), )}</span> */}
-        <div>
-          {/* Move MoreVertIcon here */}
-          {isSender && (
-            <>
-              <IconButton
-                aria-label="More actions"
-                size="small"
-                onClick={handleMenuOpen}
-                className="inline-block"
-              >
-                <MoreVertIcon />
-              </IconButton>
-              <Menu
-                anchorEl={menuAnchor}
-                open={menuOpen}
-                onClose={handleDeleteClick}
-              >
-                <MenuItem
-                  onClick={() => handleEditClick(message.id, message.senderId)}
-                >
-                  Edit
-                </MenuItem>
-                <MenuItem
-                  onClick={() =>
-                    handleDeleteClick(message.id, message.senderId)
-                  }
-                >
-                  Delete
-                </MenuItem>
-              </Menu>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="messageContent">
-        <p>
-          {message.text}{" "}
-          <div className="dateTime">
-            <Typography
-              className="text-sm"
-              variant="body2"
-              color="textSecondary"
-              sx={{
-                margin: "0px",
-                marginLeft: "2px",
-                paddingRight: "20px",
-              }}
+    <div
+      ref={ref}
+      className={`message ${isSender ? "owner" : ""} ${
+        isDeleted ? "deleted" : ""
+      }`}
+    >
+      <div className="messageInfo">
+        {isSender && (
+          <div className="messageActions">
+            <IconButton
+              aria-label="More actions"
+              size="small"
+              onClick={handleMenuOpen}
+              className="inline-block"
             >
-              {formatDistance(
-                new Date(),
-                new Date(message.date.seconds * 1000),
-                "hh:mm a",
-                {
-                  locale: enIN,
-                  addSuffix: true,
-                  includeSeconds: true,
-                }
-              )}
-            </Typography>
+              {/* <MoreVertIcon /> */}
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchor}
+              open={menuOpen}
+              onClose={handleDeleteClick}
+            >
+              <MenuItem
+                onClick={() => handleEditClick(message.id, message.senderId)}
+              >
+                Edit
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleDeleteClick(message.id, message.senderId)}
+              >
+                Delete
+              </MenuItem>
+            </Menu>
+          </div>
+        )}
+      </div>
+      <img
+        className="messageInfo"
+        src={isSender ? currentUser.photoURL : data.user.photoURL}
+        alt=""
+        style={{ width: "25px", height: "25px", borderRadius: "50%" }}
+      />
+      <div className="messageContent">
+        <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
+          {isDeleted ? "Message Deleted" : message.text}
+          <div className="message-timestamp">
+            {message.date?.seconds && (
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                className="text-gray-300 text-sm"
+                sx={{ fontSize: "0.75rem" }}
+              >
+                {formatDistance(
+                  new Date(),
+                  new Date(message.date.seconds * 1000),
+                  "hh:mm a",
+                  {
+                    locale: enIN,
+                    addSuffix: true,
+                    includeSeconds: true,
+                  }
+                )}
+                {isSender && (
+                  <span className="more-icon">
+                    <IconButton
+                      aria-label="More actions"
+                      size="small"
+                      onClick={handleMenuOpen}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </span>
+                )}
+              </Typography>
+            )}
           </div>
         </p>
-        {message.img && (
-          <img
-            src={message.img}
-            alt=""
-            onClick={() => handleImageClick(message.img)}
-            className="clickable-image"
-          />
-        )}
+        <img
+          src={message.img}
+          alt=""
+          onClick={() => handleImageClick(message.img)}
+          className="clickable-image"
+        />
         <Dialog
           open={openDialog}
           onClose={handleDialogClose}
