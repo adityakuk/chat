@@ -24,7 +24,7 @@ const Login = () => {
     } catch (err) {
       Swal.fire({
         icon: "error",
-        title: "Wrong Email and Password",
+        title: "Invalid Email and Password",
         text: "Please enter your valid Email and Password",
       });
       setErr(true);

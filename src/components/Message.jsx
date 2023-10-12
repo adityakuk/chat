@@ -39,6 +39,10 @@ const Message = ({ message }) => {
     setMenuAnchor(event.currentTarget);
     setMenuOpen(true);
   };
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+    setMenuOpen(false);
+  };
 
   const handleEditClick = async (id, senderId) => {
     const newText = prompt("Edit the message:", message.text);
@@ -105,6 +109,99 @@ const Message = ({ message }) => {
     setOpenDialog(false);
   };
 
+  const content = message.text ? (
+    <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
+      {isDeleted ? "Message Deleted" : message.text}
+      <div className="message-timestamp">
+        {message.date?.seconds && (
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            className="text-gray-300 text-sm"
+            sx={{ fontSize: "0.75rem" }}
+          >
+            {formatDistance(
+              new Date(),
+              new Date(message.date.seconds * 1000),
+              "hh:mm a",
+              {
+                locale: enIN,
+                addSuffix: true,
+                includeSeconds: true,
+              }
+            )}
+            {isSender && (
+              <span className="more-icon">
+                <IconButton
+                  aria-label="More actions"
+                  size="small"
+                  onClick={handleMenuOpen}
+                  sx={{ float: "right" }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              </span>
+            )}
+          </Typography>
+        )}
+      </div>
+    </p>
+  ) : (
+    <div className="flex justify-end items-end">
+      <div
+        className={` ${
+          isSender
+            ? " w-60 right-0 top-0 text-right bg-slate-500"
+            : "bg-red-600"
+        }`}
+      >
+        <div className="">
+          <img
+            src={message.img}
+            alt=""
+            onClick={() => handleImageClick(message.img)}
+            className="clickable-image "
+          />
+          {isSender &&
+            !isDeleted && ( // Only show MoreVertIcon for undeleted images
+              <span className="more-icon">
+                {formatDistance(
+                  new Date(),
+                  new Date(message.date.seconds * 1000),
+                  "hh:mm a",
+                  {
+                    locale: enIN,
+                    addSuffix: true,
+                    includeSeconds: true,
+                  }
+                )}
+                <IconButton
+                  aria-label="More actions"
+                  size="small"
+                  onClick={handleMenuOpen}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={menuAnchor}
+                  open={menuOpen}
+                  onClose={handleDeleteClick}
+                >
+                  <MenuItem
+                    onClick={() =>
+                      handleDeleteClick(message.id, message.senderId)
+                    }
+                  >
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </span>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div
       ref={ref}
@@ -149,47 +246,7 @@ const Message = ({ message }) => {
         style={{ width: "25px", height: "25px", borderRadius: "50%" }}
       />
       <div className="messageContent">
-        <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
-          {isDeleted ? "Message Deleted" : message.text}
-          <div className="message-timestamp">
-            {message.date?.seconds && (
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                className="text-gray-300 text-sm"
-                sx={{ fontSize: "0.75rem" }}
-              >
-                {formatDistance(
-                  new Date(),
-                  new Date(message.date.seconds * 1000),
-                  "hh:mm a",
-                  {
-                    locale: enIN,
-                    addSuffix: true,
-                    includeSeconds: true,
-                  }
-                )}
-                {isSender && (
-                  <span className="more-icon">
-                    <IconButton
-                      aria-label="More actions"
-                      size="small"
-                      onClick={handleMenuOpen}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </span>
-                )}
-              </Typography>
-            )}
-          </div>
-        </p>
-        <img
-          src={message.img}
-          alt=""
-          onClick={() => handleImageClick(message.img)}
-          className="clickable-image"
-        />
+        {content}
         <Dialog
           open={openDialog}
           onClose={handleDialogClose}
@@ -219,7 +276,7 @@ const Message = ({ message }) => {
               style={{ width: "100%" }}
             />
           </DialogContent>
-        </Dialog>{" "}
+        </Dialog>
       </div>
     </div>
   );
