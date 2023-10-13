@@ -265,40 +265,40 @@
             margin-left: 1px; /* Add margin to separate icon from text */
             margin-right: -15px;
           }
-          .messageContent {
-            max-width: 80%;
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
+          // .messageContent {
+          //   max-width: 80%;
+          //   display: flex;
+          //   flex-direction: column;
+          //   gap: 1px;
 
-            p {
-              background-color: white;
-              padding: 4px 15px;
-              margin-left: 0px;
-              margin-right: -5px;
+          //   p {
+          //     background-color: white;
+          //     padding: 4px 15px;
+          //     margin-left: 0px;
+          //     margin-right: -5px;
 
-              padding-left: 20px;
-              padding-right: 10px;
-              border-radius: 0px 10px 10px 10px;
-              max-width: max-content;
-            }
+          //     padding-left: 20px;
+          //     padding-right: 10px;
+          //     border-radius: 0px 10px 10px 10px;
+          //     max-width: max-content;
+          //   }
 
-            img {
-              width: 70%;
+          //   img {
+          //     width: 70%;
               
-            }
-          }
+          //   }
+          // }
 
           &.owner {
             flex-direction: row-reverse;
 
-            .messageContent {
-              align-items: flex-end;
-              p {
-                background-color: #00a17e;
-                color: white;
-              }
-            }
+            // .messageContent {
+            //   align-items: flex-end;
+            //   p {
+            //     background-color: #00a17e;
+            //     color: white;
+            //   }
+            // }
           }
         }
       }
