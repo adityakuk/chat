@@ -14,6 +14,9 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import CloseIcon from "@mui/icons-material/Close";
 import Typography from "@mui/material/Typography";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 const Message = ({ message }) => {
   const { currentUser } = useContext(AuthContext);
@@ -120,16 +123,7 @@ const Message = ({ message }) => {
             className="text-gray-300 text-sm"
             sx={{ fontSize: "0.75rem" }}
           >
-            {formatDistance(
-              new Date(),
-              new Date(message.date.seconds * 1000),
-              "hh:mm a",
-              {
-                locale: enIN,
-                addSuffix: true,
-                includeSeconds: true,
-              }
-            )}
+            {dayjs(new Date(message.date.seconds * 1000)).fromNow()}
             {isSender && (
               <span className="more-icon">
                 <IconButton
