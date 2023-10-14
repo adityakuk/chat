@@ -13,6 +13,8 @@ import {
 import { db, storage } from "../firebase";
 import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { TextField, Tooltip } from "@mui/material";
+import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 
 const Input = () => {
   const [text, setText] = useState("");
@@ -82,12 +84,20 @@ const Input = () => {
   };
   return (
     <div className="input">
-      <input
+      <TextField
+        id="filled-basic"
+        label="Type Something..."
+        variant="filled"
+        onChange={(e) => setText(e.target.value)}
+        value={text}
+        sx={{ width: "100%" }}
+      />
+      {/* <input
         type="text"
         placeholder="Type something..."
         onChange={(e) => setText(e.target.value)}
         value={text}
-      />
+      /> */}
       <div className="send">
         {/* <img src={Attach} alt="" /> */}
         <input
@@ -96,8 +106,12 @@ const Input = () => {
           id="file"
           onChange={(e) => setImg(e.target.files[0])}
         />
+
         <label htmlFor="file">
-          <img src={Img} alt="" />
+          <Tooltip title="Upload Image" arrow>
+            <InsertPhotoIcon src={img} alt="" />
+          </Tooltip>
+          {/* <img src={Img} alt="" /> */}
         </label>
         <button onClick={handleSend}>Send</button>
       </div>

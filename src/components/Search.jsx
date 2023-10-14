@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { AuthContext } from "../context/AuthContext";
+import { TextField, Typography } from "@mui/material";
 const Search = () => {
   const [username, setUsername] = useState("");
   const [user, setUser] = useState(null);
@@ -90,13 +91,16 @@ const Search = () => {
   return (
     <div className="search">
       <div className="searchForm">
-        <input
-          type="text"
-          placeholder="Find a user"
-          onKeyDown={handleKey}
-          onChange={(e) => setUsername(e.target.value)}
-          value={username}
-        />
+        <Typography>
+          <TextField
+            id="outlined-basic"
+            label="Search User"
+            variant="outlined"
+            onKeyDown={handleKey}
+            onChange={(e) => setUsername(e.target.value)}
+            value={username}
+          />
+        </Typography>
       </div>
       {err && <span>User not found!</span>}
       {user && (

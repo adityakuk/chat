@@ -36,26 +36,24 @@ const ChatsUser = () => {
 
   return (
     <div>
+      <ListItemButton sx={{ bgcolor: "#2f2d52" }}>
+        <PeopleIcon sx={{ marginRight: 3, color: "white" }} />
+        <ListItemText
+          sx={{ color: "white", typography: "body2" }}
+          primary="All Users"
+        />
+      </ListItemButton>
+      <Divider />
+
       <Paper
         sx={{
-          height: "560px",
+          height: "514px",
           width: "200px",
           overflow: "auto",
-          backgroundColor: "",
         }}
       >
         <Box sx={{ width: "200%", maxWidth: 360, bgcolor: "#2f2d52" }}>
           <List>
-            <ListItem disablePadding>
-              <ListItemButton>
-                <PeopleIcon sx={{ marginRight: 3 }} />
-                <ListItemText
-                  sx={{ color: "white", typography: "body2" }}
-                  primary="All Users"
-                />
-              </ListItemButton>
-            </ListItem>
-            <Divider />
             {users.map((user) => (
               <div key={user.uid}>
                 <ListItem>
