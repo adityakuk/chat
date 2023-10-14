@@ -169,7 +169,7 @@ const Message = ({ message }) => {
               fontSize: theme.spacing(1.5),
               flexGrow: 1,
               lineHeight: theme.spacing(4.5),
-              textAlign: "end",
+              textAlign: isSender ? "end" : "start",
             }}
           >
             {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
@@ -183,47 +183,47 @@ const Message = ({ message }) => {
       </MuiGrid>
     </>
   ) : (
-    <div className={` ${isSender ? " w-60 right-0 top-0 text-right0" : ""}`}>
+    <div className={` ${isSender ? "w-60 right-0 top-0 text-right0" : "w-60"}`}>
       <ImageList variant="quilted" cols={1} rowHeight={164}>
         <ImageListItem>
           <img
             src={message.img}
             alt=""
             onClick={() => handleImageClick(message.img)}
+            style={{ cursor: "pointer" }}
           />
         </ImageListItem>
       </ImageList>
 
-      {isSender &&
-        !isDeleted && ( // Only show MoreVertIcon for undeleted images
-          <>
-            <MuiGrid
-              container
+      {isSender && !isDeleted && (
+        <>
+          <MuiGrid
+            container
+            sx={{
+              backgroundColor: theme.palette.background.default,
+            }}
+          >
+            <MuiTypography
+              variant="body2"
               sx={{
-                backgroundColor: theme.palette.background.default,
+                fontSize: theme.spacing(1.5),
+                flexGrow: 1,
+                lineHeight: theme.spacing(4.5),
+                textAlign: "end",
               }}
             >
-              <MuiTypography
-                variant="body2"
-                sx={{
-                  fontSize: theme.spacing(1.5),
-                  flexGrow: 1,
-                  lineHeight: theme.spacing(4.5),
-                  textAlign: "end",
-                }}
-              >
-                {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
-              </MuiTypography>
-              <IconButton
-                aria-label="More actions"
-                size="small"
-                onClick={handleMenuOpen}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            </MuiGrid>
-          </>
-        )}
+              {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
+            </MuiTypography>
+            <IconButton
+              aria-label="More actions"
+              size="small"
+              onClick={handleMenuOpen}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </MuiGrid>
+        </>
+      )}
     </div>
   );
 

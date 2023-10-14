@@ -110,7 +110,9 @@
     .sidebar {
       flex: 1;
       background-color: #3e3c61;
-      position: relative;
+      position: relative; 
+      margin-bottom: -5px;
+
 
       .navbar {
         display: flex;

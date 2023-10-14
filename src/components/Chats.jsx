@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { ChatContext } from "../context/ChatContext";
 import { db } from "../firebase";
+import Paper from "@mui/material/Paper";
 
 const Chats = () => {
   const [chats, setChats] = useState([]);
@@ -30,28 +31,36 @@ const Chats = () => {
 
   return (
     <div className="chats">
-      {Object.entries(chats)
-        ?.sort((a, b) => b[1].date - a[1].date)
-        .map((chat) => (
-          <div
-            className="userChat"
-            key={chat[0]}
-            onClick={() => handleSelect(chat[1].userInfo)}
-          >
-            {chat[1].userInfo ? ( // Check if userInfo is defined
-              <>
-                <img src={chat[1].userInfo.photoURL} alt="" />
-                <div className="userChatInfo">
-                  <span>{chat[1].userInfo.displayName}</span>
-                  <p>{chat[1].lastMessage?.text}</p>
-                </div>
-              </>
-            ) : (
-              // Render an alternative content or message when userInfo is undefined
-              <p>User information not available</p>
-            )}
-          </div>
-        ))}
+      <Paper
+        sx={{
+          height: "415px",
+          overflow: "auto",
+          backgroundColor: "#2f2d52",
+        }}
+      >
+        {Object.entries(chats)
+          ?.sort((a, b) => b[1].date - a[1].date)
+          .map((chat) => (
+            <div
+              className="userChat"
+              key={chat[0]}
+              onClick={() => handleSelect(chat[1].userInfo)}
+            >
+              {chat[1].userInfo ? ( // Check if userInfo is defined
+                <>
+                  <img src={chat[1].userInfo.photoURL} alt="" />
+                  <div className="userChatInfo">
+                    <span>{chat[1].userInfo.displayName}</span>
+                    <p>{chat[1].lastMessage?.text}</p>
+                  </div>
+                </>
+              ) : (
+                // Render an alternative content or message when userInfo is undefined
+                <p>User information not available</p>
+              )}
+            </div>
+          ))}
+      </Paper>
     </div>
   );
 };
