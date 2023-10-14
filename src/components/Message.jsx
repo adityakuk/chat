@@ -13,12 +13,15 @@ import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import CloseIcon from "@mui/icons-material/Close";
-import Typography from "@mui/material/Typography";
+import MuiTypography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import MuiGrid from "@mui/material/Grid";
+import { Box, ImageList, ImageListItem, useTheme } from "@mui/material";
 dayjs.extend(relativeTime);
 
 const Message = ({ message }) => {
+  const theme = useTheme();
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
 
@@ -108,8 +111,8 @@ const Message = ({ message }) => {
     setOpenDialog(false);
   };
 
-  const content = message.text ? (
-    <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
+  /**
+   * <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
       {isDeleted ? "Message Deleted" : message.text}
       <div className="message-timestamp">
         {message.date?.seconds && (
@@ -136,59 +139,91 @@ const Message = ({ message }) => {
         )}
       </div>
     </p>
-  ) : (
-    <div className="flex justify-end items-end">
-      <div
-        className={` ${
-          isSender
-            ? " w-60 right-0 top-0 text-right bg-slate-500"
-            : "bg-red-600"
-        }`}
+   */
+  const content = message.text ? (
+    <>
+      <MuiGrid
+        container
+        sx={{
+          padding: theme.spacing(1),
+          borderRadius: theme.spacing(1),
+          backgroundColor: isSender
+            ? "#bf94ff"
+            : theme.palette.background.default,
+        }}
       >
-        <div className="">
+        <MuiGrid item xs={12}>
+          <MuiGrid container>
+            <MuiGrid item flexGrow={1}>
+              {isDeleted ? (
+                <MuiTypography variant="body2">Message Deleted</MuiTypography>
+              ) : (
+                <MuiTypography variant="body2">{message.text}</MuiTypography>
+              )}
+            </MuiGrid>
+          </MuiGrid>
+        </MuiGrid>
+        <MuiGrid item xs={12} textAlign={isSender ? "end" : "start"}>
+          <MuiTypography
+            sx={{
+              fontSize: theme.spacing(1.5),
+              flexGrow: 1,
+              lineHeight: theme.spacing(4.5),
+              textAlign: "end",
+            }}
+          >
+            {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
+            {isSender && (
+              <IconButton size="small" onClick={handleMenuOpen}>
+                <MoreVertIcon />
+              </IconButton>
+            )}
+          </MuiTypography>
+        </MuiGrid>
+      </MuiGrid>
+    </>
+  ) : (
+    <div className={` ${isSender ? " w-60 right-0 top-0 text-right0" : ""}`}>
+      <ImageList variant="quilted" cols={1} rowHeight={164}>
+        <ImageListItem>
           <img
             src={message.img}
             alt=""
             onClick={() => handleImageClick(message.img)}
-            className="clickable-image "
           />
-          {isSender &&
-            !isDeleted && ( // Only show MoreVertIcon for undeleted images
-              <span className="more-icon">
-                {formatDistance(
-                  new Date(),
-                  new Date(message.date.seconds * 1000),
-                  "hh:mm a",
-                  {
-                    locale: enIN,
-                    addSuffix: true,
-                    includeSeconds: true,
-                  }
-                )}
-                <IconButton
-                  aria-label="More actions"
-                  size="small"
-                  onClick={handleMenuOpen}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu
-                  anchorEl={menuAnchor}
-                  open={menuOpen}
-                  onClose={handleDeleteClick}
-                >
-                  <MenuItem
-                    onClick={() =>
-                      handleDeleteClick(message.id, message.senderId)
-                    }
-                  >
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </span>
-            )}
-        </div>
-      </div>
+        </ImageListItem>
+      </ImageList>
+
+      {isSender &&
+        !isDeleted && ( // Only show MoreVertIcon for undeleted images
+          <>
+            <MuiGrid
+              container
+              sx={{
+                backgroundColor: theme.palette.background.default,
+              }}
+            >
+              <MuiTypography
+                variant="body2"
+                sx={{
+                  fontSize: theme.spacing(1.5),
+                  flexGrow: 1,
+                  lineHeight: theme.spacing(4.5),
+                  textAlign: "end",
+                }}
+              >
+                {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
+              </MuiTypography>
+              <IconButton
+                aria-label="More actions"
+                size="small"
+                onClick={handleMenuOpen}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </MuiGrid>
+          </>
+        )}
     </div>
   );
 
@@ -215,15 +250,17 @@ const Message = ({ message }) => {
               open={menuOpen}
               onClose={handleDeleteClick}
             >
-              <MenuItem
-                onClick={() => handleEditClick(message.id, message.senderId)}
-              >
-                Edit
-              </MenuItem>
+              {message.text && (
+                <MenuItem
+                  onClick={() => handleEditClick(message.id, message.senderId)}
+                >
+                  <MuiTypography variant="body2">Edit</MuiTypography>
+                </MenuItem>
+              )}
               <MenuItem
                 onClick={() => handleDeleteClick(message.id, message.senderId)}
               >
-                Delete
+                <MuiTypography variant="body2">Delete</MuiTypography>
               </MenuItem>
             </Menu>
           </div>
