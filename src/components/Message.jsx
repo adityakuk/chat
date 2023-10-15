@@ -111,35 +111,6 @@ const Message = ({ message }) => {
     setOpenDialog(false);
   };
 
-  /**
-   * <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
-      {isDeleted ? "Message Deleted" : message.text}
-      <div className="message-timestamp">
-        {message.date?.seconds && (
-          <Typography
-            variant="body2"
-            color="textSecondary"
-            className="text-gray-300 text-sm"
-            sx={{ fontSize: "0.75rem" }}
-          >
-            {dayjs(new Date(message.date.seconds * 1000)).fromNow()}
-            {isSender && (
-              <span className="more-icon">
-                <IconButton
-                  aria-label="More actions"
-                  size="small"
-                  onClick={handleMenuOpen}
-                  sx={{ float: "right" }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </span>
-            )}
-          </Typography>
-        )}
-      </div>
-    </p>
-   */
   const content = message.text ? (
     <>
       <MuiGrid
@@ -199,9 +170,7 @@ const Message = ({ message }) => {
         <>
           <MuiGrid
             container
-            sx={{
-              backgroundColor: theme.palette.background.default,
-            }}
+            sx={{ backgroundColor: theme.palette.background.default }}
           >
             <MuiTypography
               variant="body2"
