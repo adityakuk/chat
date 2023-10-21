@@ -6,10 +6,12 @@ import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import PeopleIcon from "@mui/icons-material/People";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import { db } from "../firebase.js";
-import { onSnapshot, collection } from "firebase/firestore";
+import { onSnapshot, collection, doc } from "firebase/firestore";
+import { ChatContext } from "../context/ChatContext.js";
+import { AuthContext } from "../context/AuthContext.js";
 
 const ChatsUser = () => {
   const [users, setUsers] = useState([]);
