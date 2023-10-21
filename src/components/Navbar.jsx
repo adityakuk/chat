@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 // import { auth } from "../firebase";
 import { AuthContext } from "../context/AuthContext";
 import Button from "@mui/material/Button";
-import { Typography } from "@mui/material";
+import { TextField, Typography } from "@mui/material";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -14,15 +14,29 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { db } from "../firebase.js";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import { ChatContext } from "../context/ChatContext";
 
 const Navbar = () => {
-  const { currentUser } = useContext(AuthContext);
-
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [err, setErr] = useState(false);
   const [state, setState] = React.useState({
     left: false,
   });
+
+  const [chats, setChats] = useState([]);
+  const { currentUser } = useContext(AuthContext);
+  const { dispatch } = useContext(ChatContext);
 
   useEffect(() => {
     const userRef = collection(db, "users");
@@ -35,6 +49,7 @@ const Navbar = () => {
       });
 
       setUsers(usersData);
+      setFilteredUsers(usersData);
     });
 
     return () => {
@@ -53,6 +68,81 @@ const Navbar = () => {
     setState({ ...state, [anchor]: open });
   };
 
+  useEffect(() => {
+    const getChats = () => {
+      const unsub = onSnapshot(doc(db, "userChats", currentUser.uid), (doc) => {
+        setChats(doc.data());
+      });
+
+      return () => {
+        unsub();
+      };
+    };
+
+    currentUser.uid && getChats();
+  }, [currentUser.uid]);
+
+  const handleSelect = async (user) => {
+    setErr(false); // Reset error state
+
+    const combinedId =
+      currentUser.uid > user.uid
+        ? currentUser.uid + user.uid
+        : user.uid + currentUser.uid;
+
+    try {
+      console.log("Calling handleSelect with combinedId:", combinedId);
+
+      const res = await getDoc(doc(db, "chats", combinedId));
+      if (!res.exists()) {
+        console.log("Chat does not exist, creating it...");
+
+        // Create a chat in the "chats" collection
+        await setDoc(doc(db, "chats", combinedId), {});
+
+        // Create/update user chats
+        await updateDoc(doc(db, "userChats", currentUser.uid), {
+          [combinedId]: {
+            userInfo: {
+              uid: user.uid,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+            },
+            date: serverTimestamp(),
+          },
+        });
+
+        await updateDoc(doc(db, "userChats", user.uid), {
+          [combinedId]: {
+            userInfo: {
+              uid: currentUser.uid,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+            },
+            date: serverTimestamp(),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Error in handleSelect:", err);
+    }
+
+    // setUser(null);
+    // setUsername("");
+  };
+
+  const onChangeSearch = (e) => {
+    const text = e.target.value;
+    setSearchText(text);
+
+    // searching
+    const filtered = users.filter(({ displayName }) =>
+      displayName.toLowerCase().includes(text.toLowerCase())
+    );
+
+    setFilteredUsers(filtered);
+  };
+
   const list = (anchor) => (
     <>
       <Box
@@ -62,7 +152,7 @@ const Navbar = () => {
         }}
         role="presentation"
         // onClick={toggleDrawer(anchor, false)}
-        onKeyDown={toggleDrawer(anchor, false)}
+        // onKeyDown={toggleDrawer(anchor, false)}
       >
         <ListItem
           className="new-chat-item"
@@ -76,52 +166,65 @@ const Navbar = () => {
           }}
         >
           <ListItemIcon onClick={toggleDrawer("left", false)}>
-            <ArrowBackIcon
-              sx={{
-                color: "white",
-                cursor: "pointer",
-              }}
-            />
+            <ArrowBackIcon sx={{ color: "white", cursor: "pointer" }} />
           </ListItemIcon>
           <ListItemText
-            sx={{
-              color: "white",
-              typography: "body2",
-            }}
+            sx={{ color: "white", typography: "body2" }}
             primary="New Chat"
           />
         </ListItem>
         <Divider />
         <Box
           sx={{
-            height: "calc(100% - 50px)",
+            height: "100vh",
             overflowY: "auto",
             backgroundColor: "#111B21",
           }}
         >
           <List>
-            {users.map((user) => (
-              <ListItem button key={user.uid}>
-                <Divider />
-                <ListItemIcon>
-                  <img
-                    src={user.photoURL}
-                    alt=""
-                    style={{
-                      borderRadius: "50%",
-                      width: "50px",
-                      height: "50px",
-                    }}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  sx={{
-                    color: "white",
-                    typography: "body2",
+            <TextField
+              label="Search User"
+              variant="outlined"
+              InputLabelProps={{ style: { color: "white" } }}
+              InputProps={{ sx: { border: "1px solid blue", width: "400px" } }}
+              onChange={onChangeSearch}
+              value={searchText}
+              sx={{ backgroundColor: "#202C33" }}
+            />
+            {filteredUsers.map((user) => (
+              <Box
+                onClick={toggleDrawer("left", false)}
+                sx={{ cursor: "pointer" }}
+              >
+                <ListItem
+                  key={user.uid}
+                  onClick={() => {
+                    handleSelect(user);
                   }}
-                  primary={user.displayName}
-                />
-              </ListItem>
+                  sx={{
+                    ":hover": {
+                      backgroundColor: "#090a0f",
+                    },
+                  }}
+                >
+                  <Divider />
+                  <ListItemIcon>
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      style={{
+                        borderRadius: "50%",
+                        width: "50px",
+                        height: "50px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    sx={{ color: "white", typography: "body2" }}
+                    primary={user.displayName}
+                  />
+                </ListItem>
+              </Box>
             ))}
           </List>
         </Box>
@@ -136,6 +239,7 @@ const Navbar = () => {
           <img src={currentUser.photoURL} alt="" />
           <span className="display-name">{currentUser.displayName}</span>
         </div>
+
         <Typography
           sx={{
             alignItems: "center",
@@ -148,11 +252,7 @@ const Navbar = () => {
           {["left"].map((anchor) => (
             <React.Fragment key={anchor}>
               <Button onClick={toggleDrawer("left", true)}>
-                <AddCommentIcon
-                  sx={{
-                    color: "white",
-                  }}
-                />
+                <AddCommentIcon sx={{ color: "white" }} />
               </Button>
               <Drawer
                 anchor={"left"}
