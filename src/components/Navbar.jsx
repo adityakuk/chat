@@ -157,7 +157,7 @@ const Navbar = () => {
               <Drawer
                 anchor={"left"}
                 open={state["left"]}
-                // onClose={toggleDrawer("left", false)}
+                //onClose={toggleDrawer("left", false)}
               >
                 {list(anchor)}
               </Drawer>

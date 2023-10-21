@@ -84,7 +84,6 @@ const Search = () => {
     } catch (err) {
       console.error("Error in handleSelect:", err);
     }
-
     setUser(null);
     setUsername("");
   };
