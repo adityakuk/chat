@@ -89,16 +89,27 @@ const Search = () => {
     setUsername("");
   };
   return (
-    <div className="search">
-      <div className="searchForm">
+    <div className="search" style={{ color: "#111B21" }}>
+      <div className="searchForm" style={{ backgroundColor: "#111B21" }}>
         <Typography>
           <TextField
-            id="outlined-basic"
             label="Search User"
             variant="outlined"
+            InputLabelProps={{
+              style: { color: "white" },
+            }}
+            InputProps={{
+              sx: {
+                border: "1px solid blue",
+                width: "400px",
+              },
+            }}
             onKeyDown={handleKey}
             onChange={(e) => setUsername(e.target.value)}
             value={username}
+            sx={{
+              backgroundColor: "#202C33",
+            }}
           />
         </Typography>
       </div>

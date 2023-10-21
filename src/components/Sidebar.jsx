@@ -6,7 +6,12 @@ import ChatsUser from "./ChatsUser";
 
 const Sidebar = () => {
   return (
-    <div className="sidebar">
+    <div
+      className="sidebar"
+      style={{
+        backgroundColor: "#111B21",
+      }}
+    >
       <Navbar />
       <Search />
       <Chats />

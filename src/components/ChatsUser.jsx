@@ -43,16 +43,17 @@ const ChatsUser = () => {
           primary="All Users"
         />
       </ListItemButton>
+
       <Divider />
 
       <Paper
         sx={{
-          height: "514px",
-          width: "200px",
+          height: "700px",
+          width: "180px",
           overflow: "auto",
         }}
       >
-        <Box sx={{ width: "200%", maxWidth: 360, bgcolor: "#2f2d52" }}>
+        <Box sx={{ width: "200%", bgcolor: "#2f2d52" }}>
           <List>
             {users.map((user) => (
               <div key={user.uid}>

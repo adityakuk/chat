@@ -6,6 +6,7 @@ import "./components/Index.css"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
+import Profile from "./components/profile/Profile";
 
 function App() {
   const { currentUser } = useContext(AuthContext);
@@ -31,6 +32,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="Profile" element={<Profile />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
           </Route>

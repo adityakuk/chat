@@ -15,6 +15,7 @@ import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { TextField, Tooltip } from "@mui/material";
 import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
+import Swal from "sweetalert2";
 
 const Input = () => {
   const [text, setText] = useState("");
@@ -29,31 +30,33 @@ const Input = () => {
 
       const uploadTask = uploadBytesResumable(storageRef, img);
 
-      uploadTask.on(
-        (error) => {
-          console.error("Error uploading image:", error);
-          //TODO:Handle ErrFor
+      const uploadingAlert = Swal.fire({
+        title: "Image Uploading...",
+        html: "Please wait while the image is being uploaded",
+        onBeforeOpen: () => {
+          Swal.showLoading();
         },
-        async () => {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+        allowOutsideClick: "false",
+      });
 
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            await updateDoc(doc(db, "chats", data.chatId), {
-              messages: arrayUnion({
-                id: uuid(),
-                text: "",
-                senderId: currentUser.uid,
-                date: Timestamp.now(),
-                img: downloadURL,
-              }),
-            });
-          } catch (error) {
-            console.error("Error getting image download URL:", error);
-            // Handle error here
-          }
-        }
-      );
+      try {
+        await uploadTask;
+        const downloadURL = await getDownloadURL(storageRef);
+
+        await updateDoc(doc(db, "chats", data.chatId), {
+          messages: arrayUnion({
+            id: uuid(),
+            text,
+            senderId: currentUser.uid,
+            date: Timestamp.now(),
+            img: downloadURL,
+          }),
+        });
+        uploadingAlert.close();
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        uploadingAlert.close();
+      }
     } else {
       await updateDoc(doc(db, "chats", data.chatId), {
         messages: arrayUnion({
@@ -82,6 +85,14 @@ const Input = () => {
     setText("");
     setImg(null);
   };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
     <div className="input">
       <TextField
@@ -89,6 +100,7 @@ const Input = () => {
         label="Type Something..."
         variant="filled"
         onChange={(e) => setText(e.target.value)}
+        onKeyPress={handleKeyPress}
         value={text}
         sx={{ width: "100%" }}
       />
@@ -108,7 +120,7 @@ const Input = () => {
         />
 
         <label htmlFor="file">
-          <Tooltip title="Upload Image" arrow>
+          <Tooltip title="Upload Image" arrow style={{ cursor: "pointer" }}>
             <InsertPhotoIcon src={img} alt="" />
           </Tooltip>
           {/* <img src={Img} alt="" /> */}

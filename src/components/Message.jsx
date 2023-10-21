@@ -7,8 +7,6 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { updateDoc, getDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import { format, formatDistance } from "date-fns";
-import { enIN } from "date-fns/locale";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -17,7 +15,13 @@ import MuiTypography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import MuiGrid from "@mui/material/Grid";
-import { Box, ImageList, ImageListItem, useTheme } from "@mui/material";
+import {
+  Box,
+  ImageList,
+  ImageListItem,
+  Typography,
+  useTheme,
+} from "@mui/material";
 dayjs.extend(relativeTime);
 
 const Message = ({ message }) => {
@@ -145,11 +149,9 @@ const Message = ({ message }) => {
       <MuiGrid
         container
         sx={{
-          padding: theme.spacing(1),
-          borderRadius: theme.spacing(1),
-          backgroundColor: isSender
-            ? "#bf94ff"
-            : theme.palette.background.default,
+          padding: theme.spacing(0.5),
+          borderRadius: theme.spacing(0.5),
+          backgroundColor: isSender ? "#005C4B" : "#202C33",
         }}
       >
         <MuiGrid item xs={12}>
@@ -158,7 +160,12 @@ const Message = ({ message }) => {
               {isDeleted ? (
                 <MuiTypography variant="body2">Message Deleted</MuiTypography>
               ) : (
-                <MuiTypography variant="body2">{message.text}</MuiTypography>
+                <MuiTypography
+                  variant="body2"
+                  sx={{ color: isSender ? "#E9EDD5" : "white" }}
+                >
+                  {message.text}
+                </MuiTypography>
               )}
             </MuiGrid>
           </MuiGrid>
@@ -166,13 +173,16 @@ const Message = ({ message }) => {
         <MuiGrid item xs={12} textAlign={isSender ? "end" : "start"}>
           <MuiTypography
             sx={{
-              fontSize: theme.spacing(1.5),
+              fontSize: theme.spacing(1.2),
               flexGrow: 1,
               lineHeight: theme.spacing(4.5),
               textAlign: isSender ? "end" : "start",
+              color: "#8FB89B",
             }}
           >
-            {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
+            {dayjs(new Date(message.date.seconds * 1000)).format(
+              "MMM D, h:mm A"
+            )}
             {isSender && (
               <IconButton size="small" onClick={handleMenuOpen}>
                 <MoreVertIcon />
@@ -183,7 +193,7 @@ const Message = ({ message }) => {
       </MuiGrid>
     </>
   ) : (
-    <div className={` ${isSender ? "w-60 right-0 top-0 text-right0" : "w-60"}`}>
+    <div className={` ${isSender ? "w-60 right-0 top-0" : "w-60"}`}>
       <ImageList variant="quilted" cols={1} rowHeight={164}>
         <ImageListItem>
           <img
@@ -200,19 +210,22 @@ const Message = ({ message }) => {
           <MuiGrid
             container
             sx={{
-              backgroundColor: theme.palette.background.default,
+              backgroundColor: "#005C4B",
             }}
           >
             <MuiTypography
               variant="body2"
               sx={{
-                fontSize: theme.spacing(1.5),
+                fontSize: theme.spacing(1.2),
                 flexGrow: 1,
                 lineHeight: theme.spacing(4.5),
                 textAlign: "end",
+                color: "#8FB89B",
               }}
             >
-              {dayjs(new Date(message.date.seconds * 1000)).format("h:mm A")}
+              {dayjs(new Date(message.date.seconds * 1000)).format(
+                "MMM D, h:mm A"
+              )}
             </MuiTypography>
             <IconButton
               aria-label="More actions"
@@ -224,13 +237,31 @@ const Message = ({ message }) => {
           </MuiGrid>
         </>
       )}
+      {!isSender && !isDeleted && (
+        <MuiGrid container sx={{ backgroundColor: "#202C33" }}>
+          <MuiTypography
+            variant="body2"
+            sx={{
+              fontSize: theme.spacing(1.2),
+              flexGrow: 1,
+              lineHeight: theme.spacing(4.5),
+              textAlign: "start",
+              color: "#8FB89B",
+            }}
+          >
+            {dayjs(new Date(message.date.seconds * 1000)).format(
+              "MMM D, h:mm A"
+            )}
+          </MuiTypography>
+        </MuiGrid>
+      )}
     </div>
   );
 
   return (
     <div
       ref={ref}
-      className={`message ${isSender ? "owner" : ""} ${
+      className={`message  ${isSender ? "owner" : ""} ${
         isDeleted ? "deleted" : ""
       }`}
     >

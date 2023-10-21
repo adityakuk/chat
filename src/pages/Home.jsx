@@ -7,9 +7,7 @@ const Home = () => {
   return (
     <div className="home">
       <div className="container">
-        <div>
-          <ChatsUser />
-        </div>
+        {/* <ChatsUser /> */}
         <Sidebar />
         <Chat />
       </div>
