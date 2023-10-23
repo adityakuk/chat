@@ -1,6 +1,4 @@
 import React, { useContext, useEffect, useState } from "react";
-// import { signOut } from "firebase/auth";
-// import { auth } from "../firebase";
 import { AuthContext } from "../context/AuthContext";
 import Button from "@mui/material/Button";
 import { TextField, Typography } from "@mui/material";
@@ -270,24 +268,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-{
-  /* <Button
-          variant="contained"
-          sx={{
-            color: "white",
-            backgroundColor: "red",
-            "&:hover": {
-              backgroundColor: "red",
-            },
-            width: "auto",
-            height: "auto",
-          }}
-          size="small"
-          onClick={() => signOut(auth)}
-        >
-          logout
-        </Button> */
-}
-{
-  /* <button onClick={() => signOut(auth)}>logout</button> */
-}

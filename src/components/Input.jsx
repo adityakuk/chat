@@ -1,6 +1,5 @@
 import React, { useContext, useState } from "react";
-import Img from "../img/img.png";
-import Attach from "../img/attach.png";
+import AddIcon from "@mui/icons-material/Add";
 import { AuthContext } from "../context/AuthContext";
 import { ChatContext } from "../context/ChatContext";
 import {
@@ -14,18 +13,54 @@ import { db, storage } from "../firebase";
 import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { TextField, Tooltip } from "@mui/material";
-import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import Swal from "sweetalert2";
+import MenuItem from "@mui/material/MenuItem";
+import Menu from "@mui/material/Menu";
+import IconButton from "@mui/material/IconButton";
+import FeaturedVideoIcon from "@mui/icons-material/FeaturedVideo";
 
 const Input = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
 
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
 
   const handleSend = async () => {
-    if (img) {
+    if (video) {
+      const storageRef = ref(storage, uuid());
+      const uploadTask = uploadBytesResumable(storageRef, video);
+
+      const uploadingAlert = Swal.fire({
+        title: "Video Uploading...",
+        html: "Please wait while the video is being uploaded",
+        onBeforeOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+      });
+
+      try {
+        await uploadTask;
+        const downloadURL = await getDownloadURL(storageRef);
+
+        await updateDoc(doc(db, "chats", data.chatId), {
+          messages: arrayUnion({
+            id: uuid(),
+            text,
+            senderId: currentUser.uid,
+            date: Timestamp.now(),
+            video: downloadURL,
+          }),
+        });
+        uploadingAlert.close();
+      } catch (error) {
+        console.log("Error uploading video:", error);
+        uploadingAlert.close();
+      }
+    } else if (img) {
       const storageRef = ref(storage, uuid());
 
       const uploadTask = uploadBytesResumable(storageRef, img);
@@ -84,6 +119,7 @@ const Input = () => {
 
     setText("");
     setImg(null);
+    setVideo(null);
   };
 
   const handleKeyPress = (event) => {
@@ -91,6 +127,32 @@ const Input = () => {
       event.preventDefault();
       handleSend();
     }
+  };
+
+  const handleAddIconClick = (event) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
+  const handleUploadImage = (e) => {
+    setMenuAnchor(null);
+    document.getElementById("file").click();
+  };
+
+  const handleVideoChange = (e) => {
+    setVideo(e.target.files[0]);
+  };
+
+  const handleFileChange = (e) => {
+    setImg(e.target.files[0]);
+  };
+
+  const handleUploadVideo = () => {
+    setMenuAnchor(null);
+    document.getElementById("video-file").click();
   };
 
   return (
@@ -104,28 +166,38 @@ const Input = () => {
         value={text}
         sx={{ width: "100%" }}
       />
-      {/* <input
-        type="text"
-        placeholder="Type something..."
-        onChange={(e) => setText(e.target.value)}
-        value={text}
-      /> */}
+      <IconButton onClick={handleAddIconClick}>
+        <AddIcon />
+      </IconButton>
+
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleUploadImage}>Upload Image</MenuItem>
+        <MenuItem onClick={handleUploadVideo}>Upload Video</MenuItem>
+      </Menu>
+
       <div className="send">
-        {/* <img src={Attach} alt="" /> */}
         <input
           type="file"
           style={{ display: "none" }}
           id="file"
-          onChange={(e) => setImg(e.target.files[0])}
+          onChange={handleFileChange}
+        />
+        <input
+          type="file"
+          style={{ display: "none" }}
+          id="video-file"
+          onChange={handleVideoChange}
         />
 
-        <label htmlFor="file">
-          <Tooltip title="Upload Image" arrow style={{ cursor: "pointer" }}>
-            <InsertPhotoIcon src={img} alt="" />
-          </Tooltip>
-          {/* <img src={Img} alt="" /> */}
-        </label>
         <button onClick={handleSend}>Send</button>
+
+        <IconButton onClick={handleUploadVideo}>
+          <FeaturedVideoIcon />
+        </IconButton>
       </div>
     </div>
   );

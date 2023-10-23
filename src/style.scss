@@ -340,6 +340,9 @@ html, body {
         align-items: center;
         justify-content: space-between;
       
+        .send button {
+          background-color: black;
+        }
 
         input {
           width: 100%;

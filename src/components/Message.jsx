@@ -32,7 +32,6 @@ const Message = ({ message }) => {
   const ref = useRef();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
-
   // open full screen image
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedImage, setSeletedImage] = useState("");
@@ -44,11 +43,8 @@ const Message = ({ message }) => {
   }, [message]);
 
   const isSender = message.senderId === currentUser.uid;
-
-  const handleMenuOpen = (event) => {
-    setMenuAnchor(event.currentTarget);
-    setMenuOpen(true);
-  };
+  const isVideoMessage = message.video;
+  const isImageMessage = message.img;
 
   const handleEditClick = async (id, senderId) => {
     const newText = prompt("Edit the message:", message.text);
@@ -111,8 +107,18 @@ const Message = ({ message }) => {
     setOpenDialog(true);
   };
 
+  const handleVideoClick = (videoURL) => {
+    // Handle clicking on a video
+    window.open(videoURL, "_blank");
+  };
+
   const handleDialogClose = () => {
     setOpenDialog(false);
+  };
+
+  const handleMenuOpen = (event) => {
+    setMenuAnchor(event.currentTarget);
+    setMenuOpen(true);
   };
 
   /**
@@ -192,7 +198,7 @@ const Message = ({ message }) => {
         </MuiGrid>
       </MuiGrid>
     </>
-  ) : (
+  ) : isImageMessage ? (
     <div className={` ${isSender ? "w-60 right-0 top-0" : "w-60"}`}>
       <ImageList variant="quilted" cols={1} rowHeight={164}>
         <ImageListItem>
@@ -204,7 +210,6 @@ const Message = ({ message }) => {
           />
         </ImageListItem>
       </ImageList>
-
       {isSender && !isDeleted && (
         <>
           <MuiGrid
@@ -256,7 +261,66 @@ const Message = ({ message }) => {
         </MuiGrid>
       )}
     </div>
-  );
+  ) : isVideoMessage ? (
+    <div className={` ${isSender ? "w-60 right-0 top-0" : "w-60"}`}>
+      <video
+        src={message.video}
+        controls
+        onClick={() => handleVideoClick(message.video)}
+        style={{ cursor: "pointer", width: "100%" }}
+      ></video>
+      {isSender && !isDeleted && (
+        <>
+          <MuiGrid
+            container
+            sx={{
+              backgroundColor: "#005C4B",
+            }}
+          >
+            <MuiTypography
+              variant="body2"
+              sx={{
+                fontSize: theme.spacing(1.2),
+                flexGrow: 1,
+                lineHeight: theme.spacing(4.5),
+                textAlign: "end",
+                color: "#8FB89B",
+              }}
+            >
+              {dayjs(new Date(message.date.seconds * 1000)).format(
+                "MMM D, h:mm A"
+              )}
+            </MuiTypography>
+            <IconButton
+              aria-label="More actions"
+              size="small"
+              onClick={handleMenuOpen}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </MuiGrid>
+        </>
+      )}
+      {!isSender && !isDeleted && (
+        <MuiGrid container sx={{ backgroundColor: "#202C33" }}>
+          <MuiTypography
+            variant="body2"
+            sx={{
+              fontSize: theme.spacing(1.2),
+              flexGrow: 1,
+              lineHeight: theme.spacing(4.5),
+              textAlign: "start",
+              color: "#8FB89B",
+            }}
+          >
+            {dayjs(new Date(message.date.seconds * 1000)).format(
+              "MMM D, h:mm A"
+            )}
+          </MuiTypography>
+        </MuiGrid>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div
