@@ -15,13 +15,18 @@ import MuiTypography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import MuiGrid from "@mui/material/Grid";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import {
   Box,
   ImageList,
   ImageListItem,
+  Paper,
   Typography,
   useTheme,
 } from "@mui/material";
+import Link from "@mui/material/Link";
+import { deleteObject } from "firebase/storage";
+import { storage } from "../firebase";
 dayjs.extend(relativeTime);
 
 const Message = ({ message }) => {
@@ -45,6 +50,7 @@ const Message = ({ message }) => {
   const isSender = message.senderId === currentUser.uid;
   const isVideoMessage = message.video;
   const isImageMessage = message.img;
+  const isDocumentMessage = message.document;
 
   const handleEditClick = async (id, senderId) => {
     const newText = prompt("Edit the message:", message.text);
@@ -90,7 +96,20 @@ const Message = ({ message }) => {
           chat.messages[messageIndex].text = "Message Deleted";
           chat.messages[messageIndex].isDeleted = true;
 
+          // Clear the video URL to signify that the video is deleted
+          chat.messages[messageIndex].video = null;
+
           await updateDoc(document.ref, chat);
+
+          if (chat.messages[messageIndex].video) {
+            const videoRef = ref(storage, chat.messages[messageIndex].video);
+            await deleteObject(videoRef);
+          }
+
+          chat.messages[messageIndex].video = null;
+
+          await updateDoc(document.ref, chat);
+
           setIsDeleted(true);
         }
       }
@@ -121,35 +140,11 @@ const Message = ({ message }) => {
     setMenuOpen(true);
   };
 
-  /**
-   * <p className={`message-text ${isDeleted ? "deleted-text" : ""}`}>
-      {isDeleted ? "Message Deleted" : message.text}
-      <div className="message-timestamp">
-        {message.date?.seconds && (
-          <Typography
-            variant="body2"
-            color="textSecondary"
-            className="text-gray-300 text-sm"
-            sx={{ fontSize: "0.75rem" }}
-          >
-            {dayjs(new Date(message.date.seconds * 1000)).fromNow()}
-            {isSender && (
-              <span className="more-icon">
-                <IconButton
-                  aria-label="More actions"
-                  size="small"
-                  onClick={handleMenuOpen}
-                  sx={{ float: "right" }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </span>
-            )}
-          </Typography>
-        )}
-      </div>
-    </p>
-   */
+  const handleDocumentClick = (documentURL) => {
+    // Handle clicking on a document link
+    window.open(documentURL, "_blank");
+  };
+
   const content = message.text ? (
     <>
       <MuiGrid
@@ -300,6 +295,99 @@ const Message = ({ message }) => {
             </IconButton>
           </MuiGrid>
         </>
+      )}
+      {!isSender && !isDeleted && (
+        <MuiGrid container sx={{ backgroundColor: "#202C33" }}>
+          <MuiTypography
+            variant="body2"
+            sx={{
+              fontSize: theme.spacing(1.2),
+              flexGrow: 1,
+              lineHeight: theme.spacing(4.5),
+              textAlign: "start",
+              color: "#8FB89B",
+            }}
+          >
+            {dayjs(new Date(message.date.seconds * 1000)).format(
+              "MMM D, h:mm A"
+            )}
+          </MuiTypography>
+        </MuiGrid>
+      )}
+    </div>
+  ) : isDocumentMessage ? (
+    <div className={` ${isSender ? "w-60 right-0 top-0" : "w-60"}`}>
+      <Paper elevation={3} style={{ padding: 16, backgroundColor: "#025144" }}>
+        <Link
+          href={message.document}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            backgroundColor: isSender ? "#005C4B" : "#005C4B",
+            padding: "10px",
+
+            borderRadius: "4px",
+          }}
+          onClick={() => handleDocumentClick(message.document)}
+        >
+          <div
+            style={{
+              width: "24px",
+              height: "24px",
+              backgroundColor: "#90C4F9", // Customize the styling
+              borderRadius: "50%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: "10px",
+            }}
+          >
+            <InsertDriveFileIcon fontSize="large" />
+          </div>
+          <Typography
+            sx={{
+              color: isSender ? "#E9EDD5" : "white",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+          >
+            Document
+          </Typography>
+        </Link>
+      </Paper>
+
+      {isSender && !isDeleted && (
+        <MuiGrid
+          container
+          sx={{
+            backgroundColor: "#005C4B",
+          }}
+        >
+          <MuiTypography
+            variant="body2"
+            sx={{
+              fontSize: theme.spacing(1.2),
+              flexGrow: 1,
+              lineHeight: theme.spacing(4.5),
+              textAlign: "end",
+              color: "#8FB89B",
+            }}
+          >
+            {dayjs(new Date(message.date.seconds * 1000)).format(
+              "MMM D, h:mm A"
+            )}
+          </MuiTypography>
+          <IconButton
+            aria-label="More actions"
+            size="small"
+            onClick={handleMenuOpen}
+          >
+            <MoreVertIcon />
+          </IconButton>
+        </MuiGrid>
       )}
       {!isSender && !isDeleted && (
         <MuiGrid container sx={{ backgroundColor: "#202C33" }}>

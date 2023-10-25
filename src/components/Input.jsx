@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { AuthContext } from "../context/AuthContext";
 import { ChatContext } from "../context/ChatContext";
@@ -17,19 +17,58 @@ import Swal from "sweetalert2";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import IconButton from "@mui/material/IconButton";
+import ImageIcon from "@mui/icons-material/Image";
 import FeaturedVideoIcon from "@mui/icons-material/FeaturedVideo";
+import ArticleIcon from "@mui/icons-material/Article";
 
 const Input = () => {
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const documentInputRef = useRef(null);
+
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
   const [video, setVideo] = useState(null);
+  const [document, setDocument] = useState(null);
+
   const [menuAnchor, setMenuAnchor] = useState(null);
 
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
 
   const handleSend = async () => {
-    if (video) {
+    if (document) {
+      const storageRef = ref(storage, uuid());
+      const uploadTask = uploadBytesResumable(storageRef, document);
+
+      const uploadingAlert = Swal.fire({
+        title: "Document Uploading...",
+        html: "Please wait while the document is being uploaded",
+        onBeforeOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+      });
+
+      try {
+        await uploadTask;
+        const downloadURL = await getDownloadURL(storageRef);
+
+        await updateDoc(doc(db, "chats", data.chatId), {
+          messages: arrayUnion({
+            id: uuid(),
+            text,
+            senderId: currentUser.uid,
+            date: Timestamp.now(),
+            document: downloadURL,
+          }),
+        });
+        uploadingAlert.close();
+      } catch (error) {
+        console.error("Error uploading document", error);
+        uploadingAlert.close();
+      }
+    } else if (video) {
       const storageRef = ref(storage, uuid());
       const uploadTask = uploadBytesResumable(storageRef, video);
 
@@ -120,6 +159,7 @@ const Input = () => {
     setText("");
     setImg(null);
     setVideo(null);
+    setDocument(null);
   };
 
   const handleKeyPress = (event) => {
@@ -139,7 +179,7 @@ const Input = () => {
 
   const handleUploadImage = (e) => {
     setMenuAnchor(null);
-    document.getElementById("file").click();
+    fileInputRef.current.click();
   };
 
   const handleVideoChange = (e) => {
@@ -149,10 +189,18 @@ const Input = () => {
   const handleFileChange = (e) => {
     setImg(e.target.files[0]);
   };
-
   const handleUploadVideo = () => {
     setMenuAnchor(null);
-    document.getElementById("video-file").click();
+    videoInputRef.current.click();
+  };
+
+  const handleDocumentChange = (e) => {
+    setDocument(e.target.files[0]);
+  };
+
+  const handleUploadDocument = () => {
+    setMenuAnchor(null);
+    documentInputRef.current.click();
   };
 
   return (
@@ -166,8 +214,21 @@ const Input = () => {
         value={text}
         sx={{ width: "100%" }}
       />
-      <IconButton onClick={handleAddIconClick}>
-        <AddIcon />
+      <IconButton
+        onClick={handleAddIconClick}
+        sx={{
+          backgroundColor: "#202C33",
+          marginLeft: "10px",
+          "&:hover": {
+            backgroundColor: "#374248",
+          },
+        }}
+      >
+        <AddIcon
+          sx={{
+            color: "white",
+          }}
+        />
       </IconButton>
 
       <Menu
@@ -175,29 +236,44 @@ const Input = () => {
         open={Boolean(menuAnchor)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleUploadImage}>Upload Image</MenuItem>
-        <MenuItem onClick={handleUploadVideo}>Upload Video</MenuItem>
+        <MenuItem onClick={handleUploadImage}>
+          <ImageIcon sx={{ marginRight: "10px" }} /> Image
+        </MenuItem>
+        <MenuItem onClick={handleUploadVideo}>
+          <FeaturedVideoIcon sx={{ marginRight: "10px" }} />
+          Video
+        </MenuItem>
+        <MenuItem onClick={handleUploadDocument}>
+          <ArticleIcon sx={{ marginRight: "10px" }} />
+          Doc
+        </MenuItem>
       </Menu>
 
-      <div className="send">
+      <div className="send ml-2">
         <input
           type="file"
           style={{ display: "none" }}
           id="file"
+          ref={fileInputRef}
           onChange={handleFileChange}
         />
         <input
           type="file"
           style={{ display: "none" }}
           id="video-file"
+          ref={videoInputRef}
           onChange={handleVideoChange}
         />
 
-        <button onClick={handleSend}>Send</button>
+        <input
+          type="file"
+          style={{ display: "none" }}
+          id="document-file"
+          ref={documentInputRef}
+          onChange={handleDocumentChange}
+        />
 
-        <IconButton onClick={handleUploadVideo}>
-          <FeaturedVideoIcon />
-        </IconButton>
+        <button onClick={handleSend}>Send</button>
       </div>
     </div>
   );
