@@ -6,6 +6,8 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { updateDoc, getDoc, doc, Timestamp } from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
+import { storage } from "../firebase";
 import { db } from "../firebase";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -26,7 +28,7 @@ import {
 } from "@mui/material";
 import Link from "@mui/material/Link";
 import { deleteObject } from "firebase/storage";
-import { storage } from "../firebase";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 dayjs.extend(relativeTime);
 
 const Message = ({ message }) => {
@@ -34,7 +36,7 @@ const Message = ({ message }) => {
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
 
-  const ref = useRef();
+  const refs = useRef();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   // open full screen image
@@ -44,13 +46,37 @@ const Message = ({ message }) => {
   const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
-    ref.current?.scrollIntoView({ behavior: "smooth" });
+    refs.current?.scrollIntoView({ behavior: "smooth" });
   }, [message]);
 
   const isSender = message.senderId === currentUser.uid;
   const isVideoMessage = message.video;
   const isImageMessage = message.img;
   const isDocumentMessage = message.document;
+
+  const downloadDocument = (documentPath, fileName) => {
+    const fileRef = ref(storage, documentPath); // Create a reference to the document
+    getDownloadURL(fileRef)
+      .then((url) => {
+        // Create a temporary anchor element to trigger the download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName; // Set the desired filename
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      })
+      .catch((error) => {
+        console.error("Error downloading document:", error);
+      });
+  };
+
+  downloadDocument("chat2", "document_filename.ext");
+
+  const handleDownloadDocument = (documentURL) => {
+    downloadDocument(documentURL);
+  };
 
   const handleEditClick = async (id, senderId) => {
     const newText = prompt("Edit the message:", message.text);
@@ -98,8 +124,14 @@ const Message = ({ message }) => {
 
           // Clear the video URL to signify that the video is deleted
           chat.messages[messageIndex].video = null;
+          chat.messages[messageIndex].document = null;
 
           await updateDoc(document.ref, chat);
+
+          if (message.document) {
+            const documentRef = ref(storage, message.document);
+            await deleteObject(documentRef);
+          }
 
           if (chat.messages[messageIndex].video) {
             const videoRef = ref(storage, chat.messages[messageIndex].video);
@@ -138,11 +170,6 @@ const Message = ({ message }) => {
   const handleMenuOpen = (event) => {
     setMenuAnchor(event.currentTarget);
     setMenuOpen(true);
-  };
-
-  const handleDocumentClick = (documentURL) => {
-    // Handle clicking on a document link
-    window.open(documentURL, "_blank");
   };
 
   const content = message.text ? (
@@ -331,13 +358,16 @@ const Message = ({ message }) => {
 
             borderRadius: "4px",
           }}
-          onClick={() => handleDocumentClick(message.document)}
+          onClick={(e) => {
+            e.preventDefault();
+            downloadDocument(message.document);
+          }}
         >
           <div
             style={{
               width: "24px",
               height: "24px",
-              backgroundColor: "#90C4F9", // Customize the styling
+              backgroundColor: "#90C4F9",
               borderRadius: "50%",
               display: "flex",
               justifyContent: "center",
@@ -357,8 +387,10 @@ const Message = ({ message }) => {
             Document
           </Typography>
         </Link>
+        <IconButton onClick={() => handleDownloadDocument(message.document)}>
+          <ArrowDownwardIcon />
+        </IconButton>
       </Paper>
-
       {isSender && !isDeleted && (
         <MuiGrid
           container
@@ -399,6 +431,7 @@ const Message = ({ message }) => {
               lineHeight: theme.spacing(4.5),
               textAlign: "start",
               color: "#8FB89B",
+              marginLeft: "10px",
             }}
           >
             {dayjs(new Date(message.date.seconds * 1000)).format(
