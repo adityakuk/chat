@@ -12,7 +12,7 @@ import {
 import { db, storage } from "../firebase";
 import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { TextField, Tooltip } from "@mui/material";
+import { TextField } from "@mui/material";
 import Swal from "sweetalert2";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
@@ -26,6 +26,7 @@ const Input = () => {
   const videoInputRef = useRef(null);
   const documentInputRef = useRef(null);
 
+  const [fileName, setFileName] = useState("");
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
   const [video, setVideo] = useState(null);
@@ -57,7 +58,7 @@ const Input = () => {
         await updateDoc(doc(db, "chats", data.chatId), {
           messages: arrayUnion({
             id: uuid(),
-            text,
+            fileName,
             senderId: currentUser.uid,
             date: Timestamp.now(),
             document: downloadURL,
@@ -189,13 +190,16 @@ const Input = () => {
   const handleFileChange = (e) => {
     setImg(e.target.files[0]);
   };
+
   const handleUploadVideo = () => {
     setMenuAnchor(null);
     videoInputRef.current.click();
   };
 
   const handleDocumentChange = (e) => {
-    setDocument(e.target.files[0]);
+    const doc = e.target.files[0];
+    setDocument(doc);
+    setFileName(doc?.name);
   };
 
   const handleUploadDocument = () => {

@@ -6,7 +6,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { updateDoc, getDoc, doc, Timestamp } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
+import { getBlob, ref } from "firebase/storage";
 import { storage } from "../firebase";
 import { db } from "../firebase";
 import Dialog from "@mui/material/Dialog";
@@ -19,7 +19,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import MuiGrid from "@mui/material/Grid";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import {
-  Box,
   ImageList,
   ImageListItem,
   Paper,
@@ -56,13 +55,15 @@ const Message = ({ message }) => {
 
   const downloadDocument = (documentPath, fileName) => {
     const fileRef = ref(storage, documentPath); // Create a reference to the document
-    getDownloadURL(fileRef)
-      .then((url) => {
-        // Create a temporary anchor element to trigger the download
+    getBlob(fileRef)
+      .then((blob) => {
+        const url = window.URL || window.webkitURL;
+        const link = url.createObjectURL(blob);
+
         const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName; // Set the desired filename
-        a.style.display = "none";
+        a.setAttribute("download", fileName);
+        a.setAttribute("href", link);
+        console.log(link);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -70,12 +71,6 @@ const Message = ({ message }) => {
       .catch((error) => {
         console.error("Error downloading document:", error);
       });
-  };
-
-  downloadDocument("chat2", "document_filename.ext");
-
-  const handleDownloadDocument = (documentURL) => {
-    downloadDocument(documentURL);
   };
 
   const handleEditClick = async (id, senderId) => {
@@ -345,6 +340,7 @@ const Message = ({ message }) => {
   ) : isDocumentMessage ? (
     <div className={` ${isSender ? "w-60 right-0 top-0" : "w-60"}`}>
       <Paper elevation={3} style={{ padding: 16, backgroundColor: "#025144" }}>
+        {console.log(message)}
         <Link
           href={message.document}
           target="_blank"
@@ -360,7 +356,7 @@ const Message = ({ message }) => {
           }}
           onClick={(e) => {
             e.preventDefault();
-            downloadDocument(message.document);
+            downloadDocument(message.document, message.fileName);
           }}
         >
           <div
@@ -384,20 +380,12 @@ const Message = ({ message }) => {
               fontWeight: "bold",
             }}
           >
-            Document
+            {message.fileName}
           </Typography>
         </Link>
-        <IconButton onClick={() => handleDownloadDocument(message.document)}>
-          <ArrowDownwardIcon />
-        </IconButton>
       </Paper>
       {isSender && !isDeleted && (
-        <MuiGrid
-          container
-          sx={{
-            backgroundColor: "#005C4B",
-          }}
-        >
+        <MuiGrid container sx={{ backgroundColor: "#005C4B" }}>
           <MuiTypography
             variant="body2"
             sx={{
