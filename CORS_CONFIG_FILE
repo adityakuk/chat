@@ -1,0 +1,8 @@
+[
+    {
+      "origin": ["http://localhost:3000", "https://chat2-54b3a.web.app/"],
+      "method": ["GET"],
+      "responseHeader": ["Content-Type"],
+      "maxAgeSeconds": 3600
+    }
+]

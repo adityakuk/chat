@@ -35,8 +35,8 @@ const Chats = () => {
       <Paper
         sx={{
           height: "100%",
-          overflow: "auto",
           backgroundColor: "#111B21",
+          overflowY: "auto",
         }}
       >
         {Object.entries(chats)

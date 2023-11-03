@@ -32,12 +32,36 @@ const Input = () => {
   const [video, setVideo] = useState(null);
   const [document, setDocument] = useState(null);
 
+  const [replyText, setReplyText] = useState(""); // State for reply text
+  const [isReplyingTo, setIsReplyingTo] = useState(null); // State for the message being replied to
+
   const [menuAnchor, setMenuAnchor] = useState(null);
 
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
 
   const handleSend = async () => {
+    const messageObject = {
+      id: uuid(),
+      text,
+      senderId: currentUser.uid,
+      date: Timestamp.now(),
+      img: "",
+      replyMessages: [], // Initialize replyMessages array
+    };
+
+    if (isReplyingTo) {
+      // If it's a reply, create a reply object
+      const replyObject = {
+        replyId: uuid(),
+        senderId: currentUser.uid,
+        date: Timestamp.now(),
+        text: replyText,
+      };
+
+      messageObject.replyMessages.push(replyObject);
+    }
+
     if (document) {
       const storageRef = ref(storage, uuid());
       const uploadTask = uploadBytesResumable(storageRef, document);
@@ -58,10 +82,12 @@ const Input = () => {
         await updateDoc(doc(db, "chats", data.chatId), {
           messages: arrayUnion({
             id: uuid(),
-            fileName,
+            text,
+
             senderId: currentUser.uid,
             date: Timestamp.now(),
             document: downloadURL,
+            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -93,6 +119,7 @@ const Input = () => {
             senderId: currentUser.uid,
             date: Timestamp.now(),
             video: downloadURL,
+            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -125,6 +152,7 @@ const Input = () => {
             senderId: currentUser.uid,
             date: Timestamp.now(),
             img: downloadURL,
+            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -134,13 +162,7 @@ const Input = () => {
       }
     } else {
       await updateDoc(doc(db, "chats", data.chatId), {
-        messages: arrayUnion({
-          id: uuid(),
-          text,
-          senderId: currentUser.uid,
-          date: Timestamp.now(),
-          img: "",
-        }),
+        messages: arrayUnion(messageObject),
       });
     }
     await updateDoc(doc(db, "userChats", currentUser.uid), {
@@ -161,6 +183,8 @@ const Input = () => {
     setImg(null);
     setVideo(null);
     setDocument(null);
+    setIsReplyingTo(null);
+    setReplyText("");
   };
 
   const handleKeyPress = (event) => {
@@ -205,6 +229,48 @@ const Input = () => {
   const handleUploadDocument = () => {
     setMenuAnchor(null);
     documentInputRef.current.click();
+  };
+
+  const handleReplyChange = (e) => {
+    setReplyText(e.target.value);
+  };
+
+  const handleReplySubmit = async () => {
+    if (replyText.trim() !== "") {
+      // Create the reply message object
+      const replyMessage = {
+        id: uuid(), // Generate a unique ID for the reply message
+        text: replyText,
+        senderId: currentUser.uid,
+        date: Timestamp.now(),
+        isReply: true, // Add a property to identify this as a reply
+        replyToMessageId: isReplyingTo.id, // Include the ID of the message being replied to
+      };
+
+      try {
+        const docRef = doc(db, "chats", data.chatId);
+        const document = await getDoc(docRef);
+
+        if (document.exists()) {
+          const chat = document.data();
+
+          // Add the reply message to the replyMessages array
+          chat.messages.push(replyMessage);
+
+          // Update the chat document with the modified messages array
+          await updateDoc(docRef, chat);
+          console.log("Reply Sent Successfully");
+        } else {
+          console.error("The document does not exist.");
+        }
+      } catch (error) {
+        console.error("Error sending reply:", error);
+      }
+
+      // Reset the reply text and clear the reply state
+      setIsReplyingTo(null);
+      setReplyText("");
+    }
   };
 
   return (
@@ -256,25 +322,25 @@ const Input = () => {
       <div className="send ml-2">
         <input
           type="file"
-          style={{ display: "none" }}
           id="file"
           ref={fileInputRef}
           onChange={handleFileChange}
+          hidden
         />
         <input
           type="file"
-          style={{ display: "none" }}
           id="video-file"
           ref={videoInputRef}
           onChange={handleVideoChange}
+          hidden
         />
 
         <input
           type="file"
-          style={{ display: "none" }}
           id="document-file"
           ref={documentInputRef}
           onChange={handleDocumentChange}
+          hidden
         />
 
         <button onClick={handleSend}>Send</button>

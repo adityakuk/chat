@@ -8,6 +8,10 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const { data } = useContext(ChatContext);
 
+  const handleReply = (message) => {
+    console.log("Replying to message", message);
+  };
+
   useEffect(() => {
     const unSub = onSnapshot(doc(db, "chats", data.chatId), (doc) => {
       if (doc.exists()) {
@@ -33,7 +37,9 @@ const Messages = () => {
   return (
     <div className="messages">
       {Array.isArray(messages) &&
-        messages.map((m) => <Message message={m} key={m.id} />)}
+        messages.map((m) => (
+          <Message message={m} onReply={handleReply} key={m.id} />
+        ))}
       {/* {messages.map((m) => (
         <Message message={m} key={m.id} />
       ))} */}

@@ -226,8 +226,8 @@ html, body {
     }
     .chat {
       flex: 2;
-      position: sticky; /* Make chat sticky */
       bottom: 0;
+      
 
       .chatInfo {
         height: 50px;
