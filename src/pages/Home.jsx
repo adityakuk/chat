@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 import Chat from "../components/Chat";
-import ChatsUser from "../components/ChatsUser";
+import SelectedMessageProvider from "../context/SelectedMessage";
 
 const Home = () => {
   return (
@@ -9,7 +9,9 @@ const Home = () => {
       <div className="container">
         {/* <ChatsUser /> */}
         <Sidebar />
-        <Chat />
+        <SelectedMessageProvider>
+          <Chat />
+        </SelectedMessageProvider>
       </div>
     </div>
   );

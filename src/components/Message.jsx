@@ -29,6 +29,8 @@ import {
 import Link from "@mui/material/Link";
 import { deleteObject } from "firebase/storage";
 import { v4 as uuid } from "uuid";
+import { useSelectedMessage } from "../hooks/useSelectedMessage";
+import ImageIcon from "@mui/icons-material/Image";
 
 dayjs.extend(relativeTime);
 
@@ -36,21 +38,18 @@ const Message = ({ message }) => {
   const theme = useTheme();
   const { currentUser } = useContext(AuthContext);
   const { data } = useContext(ChatContext);
+  const { setSelectedMessage } = useSelectedMessage();
 
-  const refs = useRef();
+  const ref = useRef();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
-  // open full screen image
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedImage, setSeletedImage] = useState("");
-
-  const [isReplyingTo, setIsReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState("");
 
   const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
-    refs.current?.scrollIntoView({ behavior: "smooth" });
+    ref.current?.scrollIntoView({ behavior: "smooth" });
   }, [message]);
 
   const isSender = message.senderId === currentUser.uid;
@@ -164,79 +163,10 @@ const Message = ({ message }) => {
     setMenuAnchor(event.currentTarget);
     setMenuOpen(true);
   };
-  // const handleReplyClick = () => {
-  //   setIsReplying(true);
-  //   setRepliedMessage(message);
-  // };
 
-  const handleCancelReply = () => {
-    setIsReplying(false);
-    setRepliedMessage(null);
-    setReplyText("");
-  };
-
-  // const handleReplyChange = (event) => {
-  //   setReplyText(event.target.value);
-  // };
-
-  const handleReplyClick = () => {
-    setIsReplyingTo(message);
-    setReplyText(`Replying to: ${message.text}\n`);
-  };
-
-  const handleReplyChange = (event) => {
-    setReplyText(event.target.value);
-  };
-
-  const handleReplySubmit = async () => {
-    const messageObject = {
-      id: uuid(),
-      text: replyText,
-      senderId: currentUser.uid,
-      date: Timestamp.now(),
-      img: "",
-    };
-
-    if (isReplyingTo) {
-      // If it's a reply, create a reply object
-      const replyObject = {
-        replyId: uuid(),
-        senderId: currentUser.uid,
-        date: Timestamp.now(),
-        text: replyText,
-      };
-      if (!messageObject.replyMessages) {
-        messageObject.replyMessages = [];
-      }
-
-      messageObject.replyMessages.push(replyObject);
-    }
-    // Your existing code for handling text messages, images, videos, documents, etc.
-
-    // Now you can update the Firestore document with the messageObject
-    try {
-      const docRef = doc(db, "chats", data.chatId);
-      const document = await getDoc(docRef);
-
-      if (document.exists()) {
-        const chat = document.data();
-
-        // Add the new message to the messages array
-        chat.messages.push(messageObject);
-
-        // Update the chat document with the modified messages array
-        await updateDoc(docRef, chat);
-        console.log("Message Sent Successfully");
-      } else {
-        console.error("The document does not exist.");
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-
-    // Clear the reply state
-    setIsReplyingTo(null);
-    setReplyText("");
+  // When user clicks reply then save the message in context
+  const handleReplyClick = (message) => {
+    setSelectedMessage(message);
   };
 
   const content = message.text ? (
@@ -245,13 +175,36 @@ const Message = ({ message }) => {
         container
         sx={{
           padding: theme.spacing(0.5),
-          borderRadius: theme.spacing(0.5),
+          borderRadius: theme.spacing(1),
           backgroundColor: isSender ? "#005C4B" : "#202C33",
         }}
       >
-        <MuiGrid item xs={12}>
+        <MuiGrid item xs={12} ref={ref}>
           <MuiGrid container>
             <MuiGrid item flexGrow={1}>
+              {message?.reply && (
+                <MuiGrid
+                  item
+                  sx={{
+                    backgroundColor: theme.palette.grey[300],
+                    borderRadius: theme.spacing(0.5),
+                    px: theme.spacing(1),
+                  }}
+                >
+                  <span style={{ cursor: "pointer" }}>
+                    {message.reply?.text && (
+                      <MuiTypography variant="body2">
+                        Replying to "{message.reply?.text}"
+                      </MuiTypography>
+                    )}
+                    {message.reply?.img && (
+                      <MuiTypography variant="body2">
+                        Replying to <ImageIcon />
+                      </MuiTypography>
+                    )}
+                  </span>
+                </MuiGrid>
+              )}
               {isDeleted ? (
                 <MuiTypography variant="body2">Message Deleted</MuiTypography>
               ) : (
@@ -301,12 +254,7 @@ const Message = ({ message }) => {
       </ImageList>
       {isSender && !isDeleted && (
         <>
-          <MuiGrid
-            container
-            sx={{
-              backgroundColor: "#005C4B",
-            }}
-          >
+          <MuiGrid container sx={{ backgroundColor: "#005C4B" }}>
             <MuiTypography
               variant="body2"
               sx={{
@@ -518,7 +466,11 @@ const Message = ({ message }) => {
       }`}
     >
       <div className="messageInfo">
-        <IconButton aria-label="Reply" size="small" onClick={handleReplyClick}>
+        <IconButton
+          aria-label="Reply"
+          size="small"
+          onClick={() => handleReplyClick(message)}
+        >
           <ReplyIcon />
         </IconButton>
         {isSender && (
@@ -562,18 +514,6 @@ const Message = ({ message }) => {
 
       <div className="messageContent">
         {content}
-        {isReplyingTo && (
-          <div className="replyInput">
-            <textarea
-              row="3"
-              placeholder="Reply to this message..."
-              value={replyText}
-              onChange={handleReplyChange}
-            ></textarea>
-            <button onClick={handleReplySubmit}>Send Reply</button>
-            <button onClick={handleCancelReply}>Cancel</button>
-          </div>
-        )}
 
         <Dialog
           open={openDialog}

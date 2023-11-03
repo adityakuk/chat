@@ -5,6 +5,7 @@ import { ChatContext } from "../context/ChatContext";
 import {
   arrayUnion,
   doc,
+  getDoc,
   serverTimestamp,
   Timestamp,
   updateDoc,
@@ -12,7 +13,7 @@ import {
 import { db, storage } from "../firebase";
 import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { TextField } from "@mui/material";
+import { TextField, alpha, styled, useTheme } from "@mui/material";
 import Swal from "sweetalert2";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
@@ -20,20 +21,52 @@ import IconButton from "@mui/material/IconButton";
 import ImageIcon from "@mui/icons-material/Image";
 import FeaturedVideoIcon from "@mui/icons-material/FeaturedVideo";
 import ArticleIcon from "@mui/icons-material/Article";
+import { useSelectedMessage } from "../hooks/useSelectedMessage";
+
+import MuiBox from "@mui/material/Box";
+import MuiGrid from "@mui/material/Grid";
+import MuiButton from "@mui/material/Button";
+import SendIcon from "@mui/icons-material/Send";
+import AttachmentIcon from "@mui/icons-material/Attachment";
+import CancelIcon from "@mui/icons-material/Cancel";
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  "& .MuiInputBase-root": {
+    position: "relative",
+    borderRadius: theme.spacing(1),
+    backgroundColor: theme.palette.background.default,
+    transition: theme.transitions.create([
+      "border-color",
+      "background-color",
+      "box-shadow",
+    ]),
+    fieldset: { borderWidth: "0px" },
+    "&.Mui-focused": {
+      boxShadow: `${alpha(theme.palette.primary.main, 0.25)} 0 0 0 0.2rem`,
+      borderColor: theme.palette.primary.main,
+    },
+    "&.Mui-error": {
+      boxShadow: `${alpha(theme.palette.error.main, 0.25)} 0 0 0 0.2rem`,
+    },
+  },
+  ".MuiFormHelperText-root": {
+    fontSize: theme.typography.body1,
+    marginLeft: 0,
+  },
+}));
 
 const Input = () => {
+  const theme = useTheme();
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const documentInputRef = useRef(null);
+  const { selectedMessage, setSelectedMessage } = useSelectedMessage();
 
   const [fileName, setFileName] = useState("");
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
   const [video, setVideo] = useState(null);
   const [document, setDocument] = useState(null);
-
-  const [replyText, setReplyText] = useState(""); // State for reply text
-  const [isReplyingTo, setIsReplyingTo] = useState(null); // State for the message being replied to
 
   const [menuAnchor, setMenuAnchor] = useState(null);
 
@@ -47,20 +80,8 @@ const Input = () => {
       senderId: currentUser.uid,
       date: Timestamp.now(),
       img: "",
-      replyMessages: [], // Initialize replyMessages array
+      reply: selectedMessage?.id ? selectedMessage : null, // Initialize reply array
     };
-
-    if (isReplyingTo) {
-      // If it's a reply, create a reply object
-      const replyObject = {
-        replyId: uuid(),
-        senderId: currentUser.uid,
-        date: Timestamp.now(),
-        text: replyText,
-      };
-
-      messageObject.replyMessages.push(replyObject);
-    }
 
     if (document) {
       const storageRef = ref(storage, uuid());
@@ -87,7 +108,6 @@ const Input = () => {
             senderId: currentUser.uid,
             date: Timestamp.now(),
             document: downloadURL,
-            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -119,7 +139,6 @@ const Input = () => {
             senderId: currentUser.uid,
             date: Timestamp.now(),
             video: downloadURL,
-            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -152,7 +171,6 @@ const Input = () => {
             senderId: currentUser.uid,
             date: Timestamp.now(),
             img: downloadURL,
-            replyMessages: messageObject.replyMessages,
           }),
         });
         uploadingAlert.close();
@@ -183,8 +201,7 @@ const Input = () => {
     setImg(null);
     setVideo(null);
     setDocument(null);
-    setIsReplyingTo(null);
-    setReplyText("");
+    setSelectedMessage(null);
   };
 
   const handleKeyPress = (event) => {
@@ -231,76 +248,94 @@ const Input = () => {
     documentInputRef.current.click();
   };
 
-  const handleReplyChange = (e) => {
-    setReplyText(e.target.value);
-  };
-
-  const handleReplySubmit = async () => {
-    if (replyText.trim() !== "") {
-      // Create the reply message object
-      const replyMessage = {
-        id: uuid(), // Generate a unique ID for the reply message
-        text: replyText,
-        senderId: currentUser.uid,
-        date: Timestamp.now(),
-        isReply: true, // Add a property to identify this as a reply
-        replyToMessageId: isReplyingTo.id, // Include the ID of the message being replied to
-      };
-
-      try {
-        const docRef = doc(db, "chats", data.chatId);
-        const document = await getDoc(docRef);
-
-        if (document.exists()) {
-          const chat = document.data();
-
-          // Add the reply message to the replyMessages array
-          chat.messages.push(replyMessage);
-
-          // Update the chat document with the modified messages array
-          await updateDoc(docRef, chat);
-          console.log("Reply Sent Successfully");
-        } else {
-          console.error("The document does not exist.");
-        }
-      } catch (error) {
-        console.error("Error sending reply:", error);
-      }
-
-      // Reset the reply text and clear the reply state
-      setIsReplyingTo(null);
-      setReplyText("");
-    }
-  };
-
   return (
-    <div className="input">
-      <TextField
-        id="filled-basic"
-        label="Type Something..."
-        variant="filled"
-        onChange={(e) => setText(e.target.value)}
-        onKeyPress={handleKeyPress}
-        value={text}
-        sx={{ width: "100%" }}
-      />
-      <IconButton
-        onClick={handleAddIconClick}
-        sx={{
-          backgroundColor: "#202C33",
-          marginLeft: "10px",
-          "&:hover": {
-            backgroundColor: "#374248",
-          },
-        }}
-      >
-        <AddIcon
-          sx={{
-            color: "white",
-          }}
-        />
-      </IconButton>
+    <MuiBox sx={{ backgroundColor: "white", padding: theme.spacing(0.5) }}>
+      <MuiGrid container>
+        {selectedMessage?.id && (
+          <MuiGrid
+            item
+            xs={12}
+            sx={{
+              backgroundColor: theme.palette.grey[300],
+              borderRadius: theme.spacing(1),
+              px: theme.spacing(1),
+            }}
+          >
+            <MuiGrid container>
+              <MuiGrid item flexGrow={1}>
+                {selectedMessage.text}
+              </MuiGrid>
+              {selectedMessage.img && (
+                <MuiGrid item flexGrow={1}>
+                  <ImageIcon />
+                </MuiGrid>
+              )}
+              <MuiGrid item>
+                <MuiButton onClick={() => setSelectedMessage(null)}>
+                  <CancelIcon />
+                </MuiButton>
+              </MuiGrid>
+            </MuiGrid>
+          </MuiGrid>
+        )}
+        <MuiGrid item xs={12}>
+          <MuiGrid container sx={{ alignItems: "center" }}>
+            <MuiGrid item>
+              <IconButton
+                onClick={handleAddIconClick}
+                sx={{
+                  borderRadius: theme.spacing(1),
+                  ":hover": { backgroundColor: theme.palette.action.hover },
+                }}
+              >
+                <AttachmentIcon />
+              </IconButton>
+            </MuiGrid>
+            <MuiGrid item sx={{ flexGrow: 1 }}>
+              <StyledTextField
+                id="filled-basic"
+                variant="outlined"
+                placeholder="Type Something..."
+                onChange={(e) => setText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                value={text}
+                fullWidth
+              />
+            </MuiGrid>
 
+            <MuiGrid item>
+              <div className="send ml-2">
+                <input
+                  type="file"
+                  id="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  hidden
+                />
+                <input
+                  type="file"
+                  id="video-file"
+                  ref={videoInputRef}
+                  onChange={handleVideoChange}
+                  hidden
+                />
+
+                <input
+                  type="file"
+                  id="document-file"
+                  ref={documentInputRef}
+                  onChange={handleDocumentChange}
+                  hidden
+                />
+                {/* Send */}
+                <MuiButton onClick={handleSend}>
+                  <SendIcon />
+                </MuiButton>
+              </div>
+            </MuiGrid>
+          </MuiGrid>
+        </MuiGrid>
+      </MuiGrid>
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
@@ -318,34 +353,7 @@ const Input = () => {
           Doc
         </MenuItem>
       </Menu>
-
-      <div className="send ml-2">
-        <input
-          type="file"
-          id="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          hidden
-        />
-        <input
-          type="file"
-          id="video-file"
-          ref={videoInputRef}
-          onChange={handleVideoChange}
-          hidden
-        />
-
-        <input
-          type="file"
-          id="document-file"
-          ref={documentInputRef}
-          onChange={handleDocumentChange}
-          hidden
-        />
-
-        <button onClick={handleSend}>Send</button>
-      </div>
-    </div>
+    </MuiBox>
   );
 };
 

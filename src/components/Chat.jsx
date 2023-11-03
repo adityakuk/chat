@@ -5,7 +5,7 @@ import Add from "../img/add.png";
 import Messages from "./Messages";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Input from "./Input";
-import { Divider, Tooltip } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { ChatContext } from "../context/ChatContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";

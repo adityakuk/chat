@@ -1,7 +1,13 @@
 {
-  "name": "booking",
+  "name": "chat",
   "version": "0.1.0",
   "private": true,
+  "description": "Chat application with react frontend and firebase backend",
+  "author": {
+    "name": "Aditya Kumar",
+    "email": "singhaditya2869@gmail.com",
+    "url": "https://chat2-54b3a.web.app"
+  },
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
