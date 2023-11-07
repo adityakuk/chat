@@ -84,7 +84,8 @@ const Input = () => {
     };
 
     if (document) {
-      const storageRef = ref(storage, uuid());
+      const storageRef = ref(storage, `${fileName}#${uuid()}`);
+
       const uploadTask = uploadBytesResumable(storageRef, document);
 
       const uploadingAlert = Swal.fire({
@@ -104,10 +105,9 @@ const Input = () => {
           messages: arrayUnion({
             id: uuid(),
             text,
-
             senderId: currentUser.uid,
             date: Timestamp.now(),
-            document: downloadURL,
+            document: { fileName, downloadURL },
           }),
         });
         uploadingAlert.close();

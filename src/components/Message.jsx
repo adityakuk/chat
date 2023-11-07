@@ -6,7 +6,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { updateDoc, getDoc, doc, Timestamp } from "firebase/firestore";
-import { getBlob, ref } from "firebase/storage";
+import { getBlob, ref as firebaseRef } from "firebase/storage";
 import { storage } from "../firebase";
 import { db } from "../firebase";
 import Dialog from "@mui/material/Dialog";
@@ -31,6 +31,10 @@ import { deleteObject } from "firebase/storage";
 import { v4 as uuid } from "uuid";
 import { useSelectedMessage } from "../hooks/useSelectedMessage";
 import ImageIcon from "@mui/icons-material/Image";
+import FeaturedVideoIcon from "@mui/icons-material/FeaturedVideo";
+import ArticleIcon from "@mui/icons-material/Article";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 dayjs.extend(relativeTime);
 
@@ -58,7 +62,7 @@ const Message = ({ message }) => {
   const isDocumentMessage = message.document;
 
   const downloadDocument = (documentPath, fileName) => {
-    const fileRef = ref(storage, documentPath); // Create a reference to the document
+    const fileRef = firebaseRef(storage, documentPath); // Create a reference to the document
     getBlob(fileRef)
       .then((blob) => {
         const url = window.URL || window.webkitURL;
@@ -67,7 +71,8 @@ const Message = ({ message }) => {
         const a = document.createElement("a");
         a.setAttribute("download", fileName);
         a.setAttribute("href", link);
-        console.log(link);
+        a.textContent = fileName;
+        console.log(link, fileName);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -85,9 +90,11 @@ const Message = ({ message }) => {
         // Create a Firestore document reference for the message
         const docRef = doc(db, "chats", data.chatId);
         const document = await getDoc(docRef);
+        debugger;
 
         if (document.exists()) {
           const chat = document.data();
+
           const message = chat.messages.find((message) => message.id === id);
 
           // update the message
@@ -191,15 +198,109 @@ const Message = ({ message }) => {
                     px: theme.spacing(1),
                   }}
                 >
+                  {/* <Typography> {data.user?.displayName} </Typography> */}
                   <span style={{ cursor: "pointer" }}>
+                    <MuiTypography
+                      variant="body2"
+                      style={{
+                        backgroundColor: "#025144",
+                        color: "white",
+                        padding: "5px",
+                      }}
+                    >
+                      {message.reply?.senderId === data.user?.uid
+                        ? data.user?.displayName
+                        : currentUser.displayName + " (You)"}
+                    </MuiTypography>
                     {message.reply?.text && (
-                      <MuiTypography variant="body2">
-                        Replying to "{message.reply?.text}"
+                      <MuiTypography
+                        variant="body2"
+                        style={{
+                          backgroundColor: "#025144",
+                          padding: "5px",
+                        }}
+                      >
+                        <MuiTypography
+                          variant="body2"
+                          style={{ color: "#90B9AD", marginLeft: "15px" }}
+                        >
+                          {isSender
+                            ? message.reply.text
+                            : "You: " + message.reply.text}{" "}
+                          {/* Display reply text accordingly */}
+                        </MuiTypography>
                       </MuiTypography>
                     )}
                     {message.reply?.img && (
-                      <MuiTypography variant="body2">
-                        Replying to <ImageIcon />
+                      <MuiTypography
+                        variant="body2"
+                        style={{
+                          backgroundColor: "#025144",
+                          padding: "5px",
+                        }}
+                      >
+                        {isSender && (
+                          <MuiTypography
+                            variant="body2"
+                            style={{ color: "#06CF9C", marginLeft: "15px" }}
+                          >
+                            {data.user?.displayName}
+                          </MuiTypography>
+                        )}
+                        <MuiTypography
+                          variant="body2"
+                          style={{ color: "#90B9AD", marginLeft: "15px" }}
+                        >
+                          Image <ImageIcon />
+                        </MuiTypography>
+                      </MuiTypography>
+                    )}
+                    {message.reply?.video && (
+                      <MuiTypography
+                        variant="body2"
+                        style={{
+                          backgroundColor: "#025144",
+                          padding: "5px",
+                        }}
+                      >
+                        {isSender && (
+                          <MuiTypography
+                            variant="body2"
+                            style={{ color: "#06CF9C", marginLeft: "15px" }}
+                          >
+                            {data.user?.displayName}
+                          </MuiTypography>
+                        )}
+                        <MuiTypography
+                          variant="body2"
+                          style={{ color: "#90B9AD", marginLeft: "15px" }}
+                        >
+                          Video <FeaturedVideoIcon />
+                        </MuiTypography>
+                      </MuiTypography>
+                    )}
+                    {message.reply?.document && (
+                      <MuiTypography
+                        variant="body2"
+                        style={{
+                          backgroundColor: "#025144",
+                          padding: "5px",
+                        }}
+                      >
+                        {isSender && (
+                          <MuiTypography
+                            variant="body2"
+                            style={{ color: "#06CF9C", marginLeft: "15px" }}
+                          >
+                            {data.user?.displayName}
+                          </MuiTypography>
+                        )}
+                        <MuiTypography
+                          variant="body2"
+                          style={{ color: "#90B9AD", marginLeft: "15px" }}
+                        >
+                          Document <ArticleIcon />
+                        </MuiTypography>
                       </MuiTypography>
                     )}
                   </span>
@@ -210,7 +311,11 @@ const Message = ({ message }) => {
               ) : (
                 <MuiTypography
                   variant="body2"
-                  sx={{ color: isSender ? "#E9EDD5" : "white" }}
+                  sx={{
+                    color: isSender ? "#E9EDD5" : "white",
+                    marginLeft: "5px",
+                    marginTop: "5px",
+                  }}
                 >
                   {message.text}
                 </MuiTypography>
@@ -374,7 +479,9 @@ const Message = ({ message }) => {
           }}
           onClick={(e) => {
             e.preventDefault();
-            downloadDocument(message.document, message.fileName);
+            const { downloadURL, fileName } = message?.document;
+
+            downloadDocument(downloadURL, fileName);
           }}
         >
           <div
@@ -402,10 +509,9 @@ const Message = ({ message }) => {
               style={{
                 color: isSender ? "#E9EDD5" : "white",
                 fontSize: "13px",
-                textTransform: "uppercase",
               }}
             >
-              {message.fileName}
+              {message?.document.fileName}
             </span>
           </Typography>
         </Link>
@@ -427,6 +533,7 @@ const Message = ({ message }) => {
               "MMM D, h:mm A"
             )}
           </MuiTypography>
+
           <IconButton
             aria-label="More actions"
             size="small"
@@ -466,13 +573,13 @@ const Message = ({ message }) => {
       }`}
     >
       <div className="messageInfo">
-        <IconButton
+        {/* <IconButton
           aria-label="Reply"
           size="small"
           onClick={() => handleReplyClick(message)}
         >
           <ReplyIcon />
-        </IconButton>
+        </IconButton> */}
         {isSender && (
           <div className="messageActions">
             <IconButton
@@ -488,33 +595,51 @@ const Message = ({ message }) => {
               open={menuOpen}
               onClose={handleDeleteClick}
             >
+              <MenuItem
+                aria-label="Reply"
+                size="small"
+                onClick={() => handleReplyClick(message)}
+              >
+                <ReplyIcon style={{ transform: "scaleX(-1)" }} />
+                <MuiTypography variant="body2" sx={{ marginLeft: "5px" }}>
+                  Reply
+                </MuiTypography>
+              </MenuItem>
+
               {message.text && (
                 <MenuItem
+                  aria-label="edit"
+                  size="small"
                   onClick={() => handleEditClick(message.id, message.senderId)}
                 >
-                  <MuiTypography variant="body2">Edit</MuiTypography>
+                  <EditIcon />
+                  <MuiTypography variant="body2" sx={{ marginLeft: "5px" }}>
+                    Edit
+                  </MuiTypography>
                 </MenuItem>
               )}
               <MenuItem
+                aria-label="delete"
+                size="small"
                 onClick={() => handleDeleteClick(message.id, message.senderId)}
               >
-                <MuiTypography variant="body2">Delete</MuiTypography>
+                <DeleteIcon />
+                <MuiTypography variant="body2" sx={{ marginLeft: "5px" }}>
+                  Delete
+                </MuiTypography>
               </MenuItem>
             </Menu>
           </div>
         )}
       </div>
-
       <img
         className="messageInfo"
         src={isSender ? currentUser.photoURL : data.user.photoURL}
         alt=""
         style={{ width: "25px", height: "25px", borderRadius: "50%" }}
       />
-
       <div className="messageContent">
         {content}
-
         <Dialog
           open={openDialog}
           onClose={handleDialogClose}
@@ -546,6 +671,17 @@ const Message = ({ message }) => {
           </DialogContent>
         </Dialog>
       </div>
+      {!isSender && (
+        <div className="messageActions">
+          <IconButton
+            aria-label="Reply"
+            size="small"
+            onClick={() => handleReplyClick(message)}
+          >
+            <ReplyIcon style={{ transform: "scaleX(-1)" }} />
+          </IconButton>
+        </div>
+      )}
     </div>
   );
 };
